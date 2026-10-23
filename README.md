@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # CampusFix
 
 CampusFix is a beginner-friendly Flask web application for reporting and tracking campus infrastructure issues. Students can submit problems such as broken furniture, electrical faults, plumbing issues, or civil damage. Administrators can review complaints, filter them, and update statuses. The app also includes a small Gemini-based feature to suggest category and priority.
@@ -162,3 +163,7 @@ http://127.0.0.1:5000/
 - Admin audit logs
 - Role-based UI controls
 - Notification workflow
+=======
+# SDS
+This repo was created for our SDS project CampusFix
+>>>>>>> bd3d8476da01e01d23abf6777b6e91a05e4701de
