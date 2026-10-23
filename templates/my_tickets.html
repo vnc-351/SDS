@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}CampusFix | My Tickets{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 pb-3 border-bottom">
+  <div>
+    <span class="text-uppercase fw-bold text-muted small letter-spacing-1">Student Portal</span>
+    <h1 class="h2 mb-1">My Submitted Tickets</h1>
+    <p class="text-secondary mb-0 small">Review all infrastructure complaints submitted from your student account.</p>
+  </div>
+  <div>
+    <a href="{{ url_for('issues.report_issue') }}" class="btn btn-primary">
+      Report New Issue
+    </a>
+  </div>
+</div>
+
+<!-- Tickets Table Panel -->
+<div class="data-panel">
+  <div class="data-panel-header">
+    <h2 class="data-panel-title">Ticket Ledger</h2>
+    <span class="text-muted small">Your activity</span>
+  </div>
+  {% if complaints %}
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>Ticket ID</th>
+          <th>Issue Title</th>
+          <th>Category</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>AI Priority</th>
+          <th>Submitted</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for complaint in complaints %}
+        <tr>
+          <td><span class="ticket-ref">{{ ticket_ref(complaint['id']) }}</span></td>
+          <td class="fw-bold">{{ complaint['title'] }}</td>
+          <td><span class="cat-tag">{{ complaint['category'] }}</span></td>
+          <td class="text-secondary small">{{ complaint['location'] }}</td>
+          <td>
+            {% if complaint['status'] == 'Pending' %}
+              <span class="status-pill status-pending"><span class="status-dot"></span> Pending</span>
+            {% elif complaint['status'] == 'In Progress' %}
+              <span class="status-pill status-progress"><span class="status-dot"></span> In Progress</span>
+            {% else %}
+              <span class="status-pill status-resolved"><span class="status-dot"></span> Resolved</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if complaint['ai_priority'] == 'High' %}
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle">High</span>
+            {% elif complaint['ai_priority'] == 'Medium' %}
+              <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Medium</span>
+            {% elif complaint['ai_priority'] == 'Low' %}
+              <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Low</span>
+            {% else %}
+              <span class="text-muted small">{{ complaint['ai_priority'] or 'None' }}</span>
+            {% endif %}
+          </td>
+          <td class="text-secondary small num-tabular">{{ complaint['created_at'][:10] }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('issues.ticket_detail', ticket_id=complaint['id']) }}" class="btn btn-sm btn-outline-primary">Details</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="p-5 text-center text-secondary">
+      <p class="fw-semibold text-dark mb-1">No Tickets Found</p>
+      <p class="small text-muted mb-3">You haven't submitted any complaints yet.</p>
+      <a href="{{ url_for('issues.report_issue') }}" class="btn btn-sm btn-primary">Report an Issue</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

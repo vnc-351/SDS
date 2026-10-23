@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}CampusFix | Report Issue{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="form-sheet my-3">
+      <div class="border-bottom pb-3 mb-4">
+        <span class="text-uppercase fw-bold text-muted small letter-spacing-1">Maintenance Work Order</span>
+        <h1 class="h3 mb-1 mt-1">Report a Campus Issue</h1>
+        <p class="text-secondary small mb-0">Provide detailed information so COEP facility maintenance teams can quickly triage and resolve the problem.</p>
+      </div>
+
+      <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row g-3">
+          <div class="col-md-7">
+            <label for="title" class="form-label">Issue Title</label>
+            <input type="text" class="form-control" id="title" name="title" placeholder="e.g. Broken bench in civil lecture hall" required>
+            <div class="form-text">A concise summary of the physical fault or maintenance issue.</div>
+          </div>
+
+          <div class="col-md-5">
+            <label for="category" class="form-label">Category</label>
+            <select class="form-select" id="category" name="category" required>
+              <option value="">Select category...</option>
+              {% for category in categories %}
+                <option value="{{ category }}">{{ category }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Select the responsible maintenance trade.</div>
+          </div>
+
+          <div class="col-12">
+            <label for="location" class="form-label">Building &amp; Room Location</label>
+            <input type="text" class="form-control" id="location" name="location" placeholder="e.g. Main Building, North Wing, Room 104" required>
+            <div class="form-text">Specify the campus building, floor, room number, or outdoor landmark.</div>
+          </div>
+
+          <div class="col-12">
+            <label for="description" class="form-label">Detailed Description</label>
+            <textarea class="form-control" id="description" name="description" rows="4" placeholder="Describe the problem, severity, hazards, and exact position..." required></textarea>
+            <div class="form-text">Include any safety risks or details that assist repair crews.</div>
+          </div>
+
+          <div class="col-12">
+            <label for="image" class="form-label">Photo Evidence (JPG or PNG)</label>
+            <input type="file" class="form-control" id="image" name="image" accept=".jpg,.jpeg,.png" required>
+            <div class="form-text">Upload a clear photograph showing the damaged asset or repair area.</div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+          <a href="{{ url_for('issues.issue_board') }}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+          <button type="submit" class="btn btn-primary px-4">Submit Complaint</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

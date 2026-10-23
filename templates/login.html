@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}CampusFix | Login{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <span class="brand-stamp mb-2 mx-auto" style="width: 32px; height: 32px; font-size: 0.85rem;" aria-hidden="true">CF</span>
+      <h1 class="h3 fw-bold mb-1">Account Login</h1>
+      <p class="text-secondary small mb-0">Sign in to report and track issues across COEP campus</p>
+    </div>
+
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="mb-3">
+        <label for="email" class="form-label">Email Address</label>
+        <input type="email" name="email" class="form-control" id="email" placeholder="name@example.com" autocomplete="email" required>
+      </div>
+
+      <div class="mb-4">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" id="password" placeholder="Enter password" autocomplete="current-password" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100 py-2">Sign In</button>
+    </form>
+
+    <div class="mt-4 pt-3 border-top text-center text-secondary small">
+      Need an account? <a href="{{ url_for('auth.register') }}" class="fw-semibold">Register as a student</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
