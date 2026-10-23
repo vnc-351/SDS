@@ -1,0 +1,1078 @@
+/* ==========================================================================
+   CampusFix — COEP Technological University
+   Human-Crafted Campus Infrastructure Platform Design System
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design Tokens & Variables
+   -------------------------------------------------------------------------- */
+:root {
+  /* COEP Brand & Surface Hierarchy */
+  --cf-navy-950: #060d15;
+  --cf-navy-900: #0a1523;
+  --cf-navy-850: #0d1b2a; /* Brand Foundation */
+  --cf-navy-800: #132337;
+  --cf-navy-700: #1a2f47;
+  --cf-navy-600: #243d5c;
+
+  /* Slates & Neutrals */
+  --cf-slate-900: #0f172a;
+  --cf-slate-800: #1e293b;
+  --cf-slate-700: #334155;
+  --cf-slate-600: #475569;
+  --cf-slate-500: #64748b;
+  --cf-slate-400: #94a3b8;
+  --cf-slate-300: #cbd5e1;
+  --cf-slate-200: #e2e8f0;
+  --cf-slate-100: #f1f5f9;
+  --cf-slate-50:  #f8fafc;
+  --cf-white:     #ffffff;
+
+  /* Accent Steel Blues */
+  --cf-accent:       #1d4ed8;
+  --cf-accent-hover: #1e40af;
+  --cf-accent-subtle: #eff6ff;
+  --cf-accent-light: #dbeafe;
+
+  /* Semantic Statuses (High contrast & accessible) */
+  --cf-pending-bg:     #fffbeb;
+  --cf-pending-text:   #92400e;
+  --cf-pending-border: #fcd34d;
+  --cf-pending-bar:    #d97706;
+
+  --cf-progress-bg:     #f0f9ff;
+  --cf-progress-text:   #0369a1;
+  --cf-progress-border: #7dd3fc;
+  --cf-progress-bar:    #0284c7;
+
+  --cf-resolved-bg:     #f0fdf4;
+  --cf-resolved-text:   #166534;
+  --cf-resolved-border: #86efac;
+  --cf-resolved-bar:    #16a34a;
+
+  /* Borders & Radii — Architectural, restrained */
+  --cf-radius-sm: 4px;
+  --cf-radius-md: 6px;
+  --cf-radius-lg: 8px;
+
+  /* Restrained Shadows */
+  --cf-shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --cf-shadow-card:   0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --cf-shadow-elevate: 0 4px 12px -2px rgba(13, 27, 42, 0.08), 0 2px 4px -1px rgba(13, 27, 42, 0.04);
+
+  /* Transitions */
+  --cf-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --cf-duration-fast: 160ms;
+  --cf-duration-base: 240ms;
+}
+
+/* --------------------------------------------------------------------------
+   2. Base Typography & Document Setup
+   -------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--cf-slate-50);
+  color: var(--cf-slate-900);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main.container {
+  flex: 1 0 auto;
+}
+
+/* Subtle architectural dot grid background on light viewports */
+.page-shell {
+  position: relative;
+  min-height: calc(100vh - 140px);
+}
+
+/* Clean text hierarchy */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--cf-navy-900);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 0;
+}
+
+h1 { font-size: 2.1rem; line-height: 1.25; }
+h2 { font-size: 1.6rem; line-height: 1.3; }
+h3 { font-size: 1.3rem; line-height: 1.35; }
+h4 { font-size: 1.1rem; line-height: 1.4; }
+h5 { font-size: 0.98rem; line-height: 1.45; }
+
+p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.text-muted,
+.text-secondary {
+  color: var(--cf-slate-600) !important;
+}
+
+a {
+  color: var(--cf-accent);
+  text-decoration: none;
+  transition: color var(--cf-duration-fast) ease;
+}
+
+a:hover {
+  color: var(--cf-accent-hover);
+  text-decoration: underline;
+}
+
+/* Tabular Numerals for metrics, dates, and ticket references */
+.num-tabular,
+.ticket-ref,
+.metric-number,
+time {
+  font-variant-numeric: tabular-nums;
+}
+
+.ticket-ref {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+  color: var(--cf-navy-800);
+  letter-spacing: 0.02em;
+}
+
+/* --------------------------------------------------------------------------
+   3. Navigation (Deep Navy Collegiate Header)
+   -------------------------------------------------------------------------- */
+.navbar-dark.bg-primary {
+  background: var(--cf-navy-850) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.75rem 0;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+  color: #ffffff !important;
+}
+
+.brand-stamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: var(--cf-radius-sm);
+  letter-spacing: 0.05em;
+}
+
+.brand-sub {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cf-slate-400);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  padding-left: 0.65rem;
+  margin-left: 0.2rem;
+}
+
+.navbar-nav .nav-link {
+  color: rgba(255, 255, 255, 0.78) !important;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.45rem 0.8rem !important;
+  border-radius: var(--cf-radius-sm);
+  transition: color var(--cf-duration-fast) ease, background-color var(--cf-duration-fast) ease;
+  position: relative;
+}
+
+.navbar-nav .nav-link:hover {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.navbar-nav .nav-link.active,
+.navbar-nav .nav-link[aria-current="page"] {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.12);
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   4. Landing Page — Architectural Deep Navy Hero & Editorial Structure
+   -------------------------------------------------------------------------- */
+.hero-wrapper {
+  margin: -1.5rem -0.75rem 2.5rem;
+  border-radius: 0;
+  position: relative;
+  background: var(--cf-navy-900);
+  color: #ffffff;
+  overflow: hidden;
+  border-bottom: 1px solid var(--cf-navy-700);
+}
+
+@media (min-width: 768px) {
+  .hero-wrapper {
+    margin: 0.5rem 0 3rem;
+    border-radius: var(--cf-radius-lg);
+    border: 1px solid var(--cf-navy-700);
+    box-shadow: 0 8px 30px rgba(10, 21, 35, 0.12);
+  }
+}
+
+/* Integrated authentic campus photography with deep navy gradient overlay */
+.hero-backdrop {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(90deg, #0a1523 0%, rgba(10, 21, 35, 0.94) 45%, rgba(10, 21, 35, 0.75) 100%),
+    url('/static/images/coep_main_heritage.jpg');
+  background-size: cover;
+  background-position: center right;
+  opacity: 0.88;
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  padding: 3.5rem 2.5rem;
+}
+
+@media (max-width: 768px) {
+  .hero-content {
+    padding: 2.25rem 1.5rem;
+  }
+  .hero-backdrop {
+    background-image: 
+      linear-gradient(180deg, rgba(10, 21, 35, 0.96) 0%, rgba(10, 21, 35, 0.85) 100%),
+      url('/static/images/coep_main_heritage.jpg');
+    opacity: 0.75;
+  }
+}
+
+.hero-tagline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #93c5fd;
+  margin-bottom: 1rem;
+}
+
+.hero-tagline::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  background: #60a5fa;
+}
+
+.hero-heading {
+  color: #ffffff;
+  font-size: 2.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  max-width: 680px;
+}
+
+@media (max-width: 768px) {
+  .hero-heading {
+    font-size: 1.8rem;
+  }
+}
+
+.hero-description {
+  color: #cbd5e1;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  max-width: 620px;
+  margin-bottom: 2rem;
+}
+
+/* Framed photo card in hero */
+.hero-photo-frame {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--cf-radius-md);
+  overflow: hidden;
+  background: var(--cf-navy-950);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  transition: transform var(--cf-duration-base) var(--cf-ease);
+}
+
+.hero-photo-frame:hover {
+  transform: translateY(-2px);
+}
+
+.hero-photo-img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  display: block;
+  filter: contrast(1.05);
+}
+
+.hero-photo-caption {
+  padding: 0.65rem 0.9rem;
+  background: rgba(10, 21, 35, 0.85);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: #e2e8f0;
+}
+
+/* Editorial Sections on Landing Page (Open layout with dividers, NOT repeated cards!) */
+.editorial-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  padding: 1.5rem 0 3rem;
+  border-bottom: 1px solid var(--cf-slate-200);
+}
+
+@media (min-width: 992px) {
+  .editorial-grid {
+    grid-template-columns: 320px 1fr;
+    gap: 3.5rem;
+  }
+}
+
+.editorial-header {
+  border-left: 3px solid var(--cf-navy-850);
+  padding-left: 1.25rem;
+}
+
+.editorial-header h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.operational-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .operational-checklist {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--cf-slate-200);
+}
+
+.checklist-num {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--cf-accent);
+  background: var(--cf-accent-subtle);
+  border: 1px solid var(--cf-accent-light);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--cf-radius-sm);
+  flex-shrink: 0;
+}
+
+.checklist-item strong {
+  display: block;
+  color: var(--cf-navy-900);
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+}
+
+.checklist-item p {
+  color: var(--cf-slate-600);
+  font-size: 0.86rem;
+  margin: 0;
+}
+
+/* Three-column campus pillars (Separated by clean vertical lines) */
+.pillars-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin: 3rem 0;
+}
+
+@media (min-width: 768px) {
+  .pillars-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+  }
+  .pillar-col {
+    padding: 0 1.75rem;
+    border-right: 1px solid var(--cf-slate-200);
+  }
+  .pillar-col:first-child {
+    padding-left: 0;
+  }
+  .pillar-col:last-child {
+    border-right: none;
+    padding-right: 0;
+  }
+}
+
+.pillar-col h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pillar-indicator {
+  width: 6px;
+  height: 6px;
+  background: var(--cf-accent);
+  border-radius: 1px;
+}
+
+.pillar-col p {
+  color: var(--cf-slate-600);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* --------------------------------------------------------------------------
+   5. Open Metric Blocks (Dashboards — NOT Generic Cards!)
+   -------------------------------------------------------------------------- */
+.metrics-ledger {
+  display: grid;
+  grid-template-columns: 1fr;
+  background: #ffffff;
+  border: 1px solid var(--cf-slate-200);
+  border-radius: var(--cf-radius-md);
+  box-shadow: var(--cf-shadow-subtle);
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .metrics-ledger.cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .metrics-ledger.cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.metric-block {
+  padding: 1.25rem 1.5rem;
+  position: relative;
+  border-bottom: 1px solid var(--cf-slate-200);
+  transition: background-color var(--cf-duration-fast) ease;
+}
+
+@media (min-width: 640px) {
+  .metric-block {
+    border-bottom: none;
+    border-right: 1px solid var(--cf-slate-200);
+  }
+  .metric-block:last-child {
+    border-right: none;
+  }
+}
+
+.metric-block:hover {
+  background-color: var(--cf-slate-50);
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cf-slate-500);
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.metric-accent-line {
+  width: 14px;
+  height: 2px;
+  background: var(--cf-slate-400);
+  display: inline-block;
+}
+
+.metric-pending .metric-accent-line { background: var(--cf-pending-bar); }
+.metric-progress .metric-accent-line { background: var(--cf-progress-bar); }
+.metric-resolved .metric-accent-line { background: var(--cf-resolved-bar); }
+.metric-total .metric-accent-line { background: var(--cf-accent); }
+
+.metric-value {
+  font-size: 2.15rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--cf-navy-900);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   6. Data Tables & Administrative Workspaces
+   -------------------------------------------------------------------------- */
+.data-panel {
+  background: #ffffff;
+  border: 1px solid var(--cf-slate-200);
+  border-radius: var(--cf-radius-md);
+  box-shadow: var(--cf-shadow-subtle);
+  overflow: hidden;
+}
+
+.data-panel-header {
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border-bottom: 1px solid var(--cf-slate-200);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.data-panel-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--cf-navy-900);
+}
+
+.table {
+  width: 100%;
+  margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table thead th {
+  background: var(--cf-slate-50);
+  color: var(--cf-slate-700);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--cf-slate-300);
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--cf-slate-200);
+  vertical-align: middle;
+  font-size: 0.9rem;
+  color: var(--cf-slate-800);
+  transition: background-color var(--cf-duration-fast) ease;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover td {
+  background-color: rgba(241, 245, 249, 0.65);
+}
+
+/* Compact filter toolbar */
+.filter-toolbar {
+  background: var(--cf-slate-100);
+  border: 1px solid var(--cf-slate-200);
+  border-radius: var(--cf-radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Thumbnail preview in tables */
+.img-preview {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: var(--cf-radius-sm);
+  border: 1px solid var(--cf-slate-300);
+  background: var(--cf-slate-100);
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   7. Structured Issue Board (Ledger Style — NOT Repeated Cards!)
+   -------------------------------------------------------------------------- */
+.issue-ledger {
+  background: #ffffff;
+  border: 1px solid var(--cf-slate-200);
+  border-radius: var(--cf-radius-md);
+  box-shadow: var(--cf-shadow-subtle);
+  overflow: hidden;
+}
+
+.issue-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--cf-slate-200);
+  transition: background-color var(--cf-duration-fast) ease;
+}
+
+.issue-row:last-child {
+  border-bottom: none;
+}
+
+.issue-row:hover {
+  background-color: var(--cf-slate-50);
+}
+
+.issue-vote-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+  flex-shrink: 0;
+  padding: 0.5rem;
+  background: var(--cf-slate-100);
+  border: 1px solid var(--cf-slate-200);
+  border-radius: var(--cf-radius-sm);
+}
+
+.issue-score {
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--cf-navy-900);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 0.35rem;
+}
+
+.issue-content {
+  flex: 1 1 auto;
+}
+
+.issue-header-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.issue-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--cf-navy-900);
+  margin: 0;
+}
+
+.issue-meta-line {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  color: var(--cf-slate-600);
+  font-size: 0.82rem;
+  margin-bottom: 0.5rem;
+}
+
+.issue-desc {
+  color: var(--cf-slate-700);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.issue-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.55rem;
+  background: var(--cf-slate-100);
+  border: 1px solid var(--cf-slate-200);
+  border-radius: var(--cf-radius-sm);
+  color: var(--cf-slate-700);
+}
+
+/* --------------------------------------------------------------------------
+   8. Form Styling (Contained, Purposeful Work Orders)
+   -------------------------------------------------------------------------- */
+.form-sheet {
+  background: #ffffff;
+  border: 1px solid var(--cf-slate-200);
+  border-radius: var(--cf-radius-md);
+  box-shadow: var(--cf-shadow-card);
+  padding: 2.25rem 2rem;
+}
+
+@media (max-width: 576px) {
+  .form-sheet {
+    padding: 1.5rem 1.25rem;
+  }
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cf-slate-800);
+  margin-bottom: 0.35rem;
+}
+
+.form-control,
+.form-select {
+  border: 1px solid var(--cf-slate-300);
+  border-radius: var(--cf-radius-sm);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.92rem;
+  color: var(--cf-slate-900);
+  background-color: #ffffff;
+  transition: border-color var(--cf-duration-fast) ease, box-shadow var(--cf-duration-fast) ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--cf-accent);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+}
+
+.form-text {
+  font-size: 0.78rem;
+  color: var(--cf-slate-500);
+  margin-top: 0.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   9. Ticket Details Specification Layout
+   -------------------------------------------------------------------------- */
+.spec-header {
+  border-bottom: 1px solid var(--cf-slate-200);
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .spec-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.spec-item {
+  border-left: 2px solid var(--cf-slate-300);
+  padding-left: 0.75rem;
+}
+
+.spec-item .spec-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cf-slate-500);
+  display: block;
+}
+
+.spec-item .spec-val {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cf-navy-900);
+}
+
+.spec-desc-box {
+  background: var(--cf-slate-50);
+  border: 1px solid var(--cf-slate-200);
+  border-radius: var(--cf-radius-sm);
+  padding: 1.25rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--cf-slate-800);
+  margin-bottom: 1.75rem;
+}
+
+/* Engineering timeline */
+.history-timeline {
+  position: relative;
+  padding-left: 1.25rem;
+  border-left: 1px solid var(--cf-slate-300);
+  margin-top: 0.75rem;
+}
+
+.history-step {
+  position: relative;
+  padding-bottom: 1.25rem;
+}
+
+.history-step:last-child {
+  padding-bottom: 0;
+}
+
+.history-step::before {
+  content: "";
+  position: absolute;
+  left: calc(-1.25rem - 4.5px);
+  top: 5px;
+  width: 8px;
+  height: 8px;
+  background: #ffffff;
+  border: 2px solid var(--cf-slate-500);
+  border-radius: 50%;
+}
+
+.history-step.is-pending::before { border-color: var(--cf-pending-bar); }
+.history-step.is-progress::before { border-color: var(--cf-progress-bar); }
+.history-step.is-resolved::before { border-color: var(--cf-resolved-bar); background: var(--cf-resolved-bar); }
+
+/* --------------------------------------------------------------------------
+   10. Status Indicators & Badges (Compact & Restrained)
+   -------------------------------------------------------------------------- */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--cf-radius-sm);
+  line-height: 1.2;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-pending {
+  background-color: var(--cf-pending-bg);
+  color: var(--cf-pending-text);
+  border: 1px solid var(--cf-pending-border);
+}
+.status-pending .status-dot { background-color: var(--cf-pending-bar); }
+
+.status-progress {
+  background-color: var(--cf-progress-bg);
+  color: var(--cf-progress-text);
+  border: 1px solid var(--cf-progress-border);
+}
+.status-progress .status-dot { background-color: var(--cf-progress-bar); }
+
+.status-resolved {
+  background-color: var(--cf-resolved-bg);
+  color: var(--cf-resolved-text);
+  border: 1px solid var(--cf-resolved-border);
+}
+.status-resolved .status-dot { background-color: var(--cf-resolved-bar); }
+
+/* Keep Bootstrap standard badge overrides aligned */
+.badge.bg-warning, .badge.text-bg-warning {
+  background-color: var(--cf-pending-bg) !important;
+  color: var(--cf-pending-text) !important;
+  border: 1px solid var(--cf-pending-border);
+  font-weight: 600;
+  border-radius: var(--cf-radius-sm);
+}
+
+.badge.bg-info, .badge.text-bg-info {
+  background-color: var(--cf-progress-bg) !important;
+  color: var(--cf-progress-text) !important;
+  border: 1px solid var(--cf-progress-border);
+  font-weight: 600;
+  border-radius: var(--cf-radius-sm);
+}
+
+.badge.bg-success, .badge.text-bg-success {
+  background-color: var(--cf-resolved-bg) !important;
+  color: var(--cf-resolved-text) !important;
+  border: 1px solid var(--cf-resolved-border);
+  font-weight: 600;
+  border-radius: var(--cf-radius-sm);
+}
+
+/* Category Tag */
+.cat-tag {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--cf-slate-700);
+  background: var(--cf-slate-100);
+  border: 1px solid var(--cf-slate-200);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--cf-radius-sm);
+}
+
+/* --------------------------------------------------------------------------
+   11. Buttons & Controls (Restrained & Architectural)
+   -------------------------------------------------------------------------- */
+.btn {
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: var(--cf-radius-sm);
+  padding: 0.5rem 1rem;
+  transition: all var(--cf-duration-fast) var(--cf-ease);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--cf-accent);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background-color: var(--cf-accent);
+  border-color: var(--cf-accent);
+  color: #ffffff;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--cf-accent-hover);
+  border-color: var(--cf-accent-hover);
+  transform: translateY(-1px);
+}
+
+.btn-outline-primary {
+  color: var(--cf-accent);
+  border-color: var(--cf-slate-300);
+  background: #ffffff;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--cf-accent-subtle);
+  border-color: var(--cf-accent);
+  color: var(--cf-accent-hover);
+}
+
+.btn-sm {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.btn-lg {
+  padding: 0.65rem 1.35rem;
+  font-size: 0.98rem;
+}
+
+/* Action button in vote box */
+.btn-vote {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   12. Authentication Split View
+   -------------------------------------------------------------------------- */
+.auth-wrapper {
+  max-width: 440px;
+  margin: 2.5rem auto;
+}
+
+.auth-card {
+  background: #ffffff;
+  border: 1px solid var(--cf-slate-200);
+  border-top: 3px solid var(--cf-navy-850);
+  border-radius: var(--cf-radius-md);
+  box-shadow: var(--cf-shadow-card);
+  padding: 2.25rem 2rem;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.auth-header h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   13. Footer
+   -------------------------------------------------------------------------- */
+.campus-footer {
+  background: #ffffff;
+  border-top: 1px solid var(--cf-slate-200);
+  padding: 1.5rem 0;
+  color: var(--cf-slate-500);
+  font-size: 0.82rem;
+  margin-top: 4rem;
+}
+
+.campus-footer a {
+  color: var(--cf-slate-600);
+  text-decoration: underline;
+}
+
+.campus-footer a:hover {
+  color: var(--cf-accent);
+}
+
+/* --------------------------------------------------------------------------
+   14. Motion & Accessibility
+   -------------------------------------------------------------------------- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-entrance {
+  animation: fadeIn 320ms var(--cf-ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .hero-photo-frame:hover,
+  .btn:hover {
+    transform: none !important;
+  }
+}
