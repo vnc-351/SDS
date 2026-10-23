@@ -1,6 +1,6 @@
 # Database Design
 
-The application stores data locally using SQLite. The schema is intentionally small and easy to explain.
+The application stores data locally using SQLite. 
 
 ## Tables
 
