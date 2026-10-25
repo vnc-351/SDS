@@ -3,102 +3,99 @@
 {% block title %}CampusFix | Home{% endblock %}
 
 {% block content %}
-<!-- Distinctive Deep Navy Hero with Authentic COEP Campus Photography -->
+<!-- Approved Hero Section matching Reference Design -->
 <section class="hero-wrapper">
-  <div class="hero-backdrop" aria-hidden="true"></div>
-  <div class="hero-content">
-    <div class="row align-items-center g-4">
-      <div class="col-lg-7">
-        <div class="hero-tagline">COEP Technological University &middot; Est. 1854</div>
-        <h1 class="hero-heading">Report building issues quickly and track them to resolution.</h1>
-        <p class="hero-description">
-          CampusFix helps students report broken furniture, electrical faults, plumbing problems, and civil maintenance issues from a single portal.
-        </p>
-        <div class="d-flex gap-3 flex-wrap align-items-center">
-          {% if session.get('user_id') %}
-            {% if session.get('user_role') == 'admin' %}
-              <a class="btn btn-primary btn-lg" href="{{ url_for('admin.admin_dashboard') }}">Open Admin Dashboard</a>
-            {% else %}
-              <a class="btn btn-primary btn-lg" href="{{ url_for('issues.report_issue') }}">Report an Issue</a>
-            {% endif %}
+  <div class="row align-items-center g-4">
+    <div class="col-lg-7">
+      <div class="hero-tagline">CAMPUS MAINTENANCE</div>
+      <h1 class="hero-heading">Small problems. Better campus.</h1>
+      <p class="hero-description">
+        Report maintenance issues and follow their progress, from submission to resolution.
+      </p>
+
+      <div class="d-flex gap-3 flex-wrap align-items-center mb-4">
+        {% if session.get('user_id') %}
+          {% if session.get('user_role') == 'admin' %}
+            <a class="btn btn-primary btn-lg" href="{{ url_for('admin.admin_dashboard') }}">Open Admin Dashboard</a>
+            <a class="btn btn-secondary-outline btn-lg" href="{{ url_for('issues.issue_board') }}">View issues &rarr;</a>
           {% else %}
-            <a class="btn btn-primary btn-lg" href="{{ url_for('auth.login') }}">Login</a>
-            <a class="btn btn-outline-light btn-lg" href="{{ url_for('auth.register') }}">Student Registration</a>
+            <a class="btn btn-primary btn-lg" href="{{ url_for('issues.report_issue') }}">Report an issue</a>
+            <a class="btn btn-secondary-outline btn-lg" href="{{ url_for('issues.issue_board') }}">View issues &rarr;</a>
           {% endif %}
+        {% else %}
+          <a class="btn btn-primary btn-lg" href="{{ url_for('auth.login') }}">Report an issue</a>
+          <a class="btn btn-secondary-outline btn-lg" href="{{ url_for('issues.issue_board') }}">View issues &rarr;</a>
+        {% endif %}
+      </div>
+
+      <!-- Compact Status Preview matching Screenshot -->
+      <div class="status-preview-box">
+        <div class="status-preview-row">
+          <div class="d-flex align-items-center gap-2">
+            <span class="status-dot-pending" aria-hidden="true"></span>
+            <strong class="status-preview-title">Pending</strong>
+          </div>
+          <span class="status-preview-desc">Awaiting review</span>
+        </div>
+        <div class="status-preview-row">
+          <div class="d-flex align-items-center gap-2">
+            <span class="status-dot-progress" aria-hidden="true"></span>
+            <strong class="status-preview-title">In progress</strong>
+          </div>
+          <span class="status-preview-desc">Being addressed</span>
+        </div>
+        <div class="status-preview-row">
+          <div class="d-flex align-items-center gap-2">
+            <span class="status-dot-resolved" aria-hidden="true"></span>
+            <strong class="status-preview-title">Resolved</strong>
+          </div>
+          <span class="status-preview-desc">Completed</span>
         </div>
       </div>
-      <div class="col-lg-5 mt-4 mt-lg-0">
-        <div class="hero-photo-frame">
-          <img src="{{ url_for('static', filename='images/coep_main_heritage.jpg') }}"
-               alt="Historic Main Heritage Building of COEP Technological University"
-               class="hero-photo-img"
-               loading="eager"
-               width="1200"
-               height="900">
-          <div class="hero-photo-caption">
-            <span class="fw-semibold">COEP Main Heritage Building</span>
-            <span class="opacity-75">Shivajinagar Campus</span>
-          </div>
-        </div>
+    </div>
+
+    <!-- Campus Photograph without Caption -->
+    <div class="col-lg-5 mt-4 mt-lg-0">
+      <div class="hero-photo-frame">
+        <img src="{{ url_for('static', filename='images/coep_main_heritage.jpg') }}"
+             alt="COEP Technological University Historic Main Building"
+             class="hero-photo-img"
+             loading="eager"
+             width="1200"
+             height="900">
       </div>
     </div>
   </div>
 </section>
 
-<!-- Section 2: Why CampusFix? (Editorial Split Layout with Dividers) -->
-<section class="editorial-grid">
-  <div class="editorial-header">
-    <span class="text-uppercase fw-bold text-muted small letter-spacing-1">Facility Management</span>
-    <h2 class="mt-1">Why CampusFix?</h2>
-    <p class="text-secondary small">Direct communication between campus occupants and maintenance staff to ensure quality learning environments.</p>
+<!-- Flowing Three-Step Guidance Section (No Repetitive Large Cards) -->
+<section class="steps-section my-5">
+  <div class="steps-header">
+    <div class="hero-tagline">HOW IT WORKS</div>
+    <h2 class="h3 fw-bold text-light">Three simple steps to resolution</h2>
+    <p class="text-secondary small mb-0" style="max-width: 600px;">
+      CampusFix directly connects student observations with maintenance teams to ensure swift campus repairs.
+    </p>
   </div>
-  <div class="editorial-body">
-    <ul class="operational-checklist">
-      <li class="checklist-item">
-        <span class="checklist-num">01</span>
-        <div>
-          <strong>Submit complaints with photos</strong>
-          <p>Attach clear photos so maintenance teams can assess tools and materials needed before visiting.</p>
-        </div>
-      </li>
-      <li class="checklist-item">
-        <span class="checklist-num">02</span>
-        <div>
-          <strong>Track live ticket status</strong>
-          <p>Real-time updates as your reported problem moves from pending review to active resolution.</p>
-        </div>
-      </li>
-      <li class="checklist-item">
-        <span class="checklist-num">03</span>
-        <div>
-          <strong>View AI category and priority suggestions</strong>
-          <p>Automated analysis suggests triage urgency and departmental routing for administrative staff.</p>
-        </div>
-      </li>
-      <li class="checklist-item">
-        <span class="checklist-num">04</span>
-        <div>
-          <strong>Fast updates for campus maintenance teams</strong>
-          <p>Centralized ledger prevents duplicate reporting and speeds up work order dispatch.</p>
-        </div>
-      </li>
-    </ul>
-  </div>
-</section>
 
-<!-- Section 3: Campus Workflow Pillars (Separated by Clean Vertical Lines) -->
-<section class="pillars-row">
-  <div class="pillar-col">
-    <h3><span class="pillar-indicator"></span> Student Portal</h3>
-    <p>Submit issues from classrooms, hostels, labs, or other campus spaces and monitor progress directly from your student dashboard.</p>
-  </div>
-  <div class="pillar-col">
-    <h3><span class="pillar-indicator"></span> Admin Review</h3>
-    <p>Search, filter, update statuses, and review AI-based maintenance guidance to coordinate swift repairs across departments.</p>
-  </div>
-  <div class="pillar-col">
-    <h3><span class="pillar-indicator"></span> Maintenance Timeline</h3>
-    <p>Every status change is recorded so teams know exactly what happened and when, maintaining full institutional transparency.</p>
+  <div class="steps-flow">
+    <div class="step-flow-item">
+      <span class="step-flow-num">01 — Report the problem</span>
+      <h3 class="step-flow-title">Describe the issue</h3>
+      <p class="step-flow-desc">Describe the issue, choose its category, and attach a photo if possible so repair staff know what to expect.</p>
+    </div>
+
+    <div class="step-flow-item">
+      <span class="step-flow-num">02 — Identify the location</span>
+      <h3 class="step-flow-title">Pinpoint campus space</h3>
+      <p class="step-flow-desc">Provide the building, floor, room, or campus area so the problem can be located accurately without delay.</p>
+    </div>
+
+    <div class="step-flow-item">
+      <span class="step-flow-num">03 — Track progress</span>
+      <h3 class="step-flow-title">Follow live updates</h3>
+      <p class="step-flow-desc">Follow the ticket as it moves from Pending to In Progress and then Resolved with timestamped milestones.</p>
+    </div>
   </div>
 </section>
 {% endblock %}

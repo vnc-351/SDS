@@ -6,8 +6,8 @@
 <!-- Page Header -->
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pb-3 border-bottom">
   <div>
-    <span class="text-uppercase fw-bold text-muted small letter-spacing-1">Community Triage</span>
-    <h1 class="h2 mb-1">Open Campus Issues</h1>
+    <span class="text-uppercase fw-bold text-cyan small letter-spacing-1">Community Triage</span>
+    <h1 class="h2 mb-1 text-light">Open Campus Issues</h1>
     <p class="text-secondary mb-0 small">Vote for pending infrastructure faults to help facility managers prioritize urgent campus repairs.</p>
   </div>
   {% if session.get('user_role') != 'admin' %}
@@ -53,7 +53,7 @@
         <div class="issue-content">
           <div class="issue-header-line">
             <h2 class="issue-title">
-              <a href="{{ url_for('issues.ticket_detail', ticket_id=complaint['id']) }}" class="text-dark text-decoration-none">
+              <a href="{{ url_for('issues.ticket_detail', ticket_id=complaint['id']) }}" class="text-light text-decoration-none">
                 {{ complaint['title'] }}
               </a>
             </h2>
@@ -68,7 +68,7 @@
           <p class="issue-desc">{{ complaint['description'] }}</p>
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <span class="issue-ai-badge">
-              <strong>AI Priority:</strong> {{ complaint['ai_priority'] or 'Not evaluated' }}
+              <strong class="text-cyan">AI Priority:</strong> {{ complaint['ai_priority'] or 'Not evaluated' }}
             </span>
             <span class="text-muted small">&mdash; Advisory suggestion for administrative review</span>
           </div>
@@ -78,7 +78,7 @@
   </div>
 {% else %}
   <div class="data-panel p-5 text-center text-secondary">
-    <p class="fw-semibold text-dark mb-1">No Open Issues</p>
+    <p class="fw-semibold text-light mb-1">No Open Issues</p>
     <p class="small text-muted mb-0">There are no open campus issues to vote on right now. All reported issues have been processed.</p>
   </div>
 {% endif %}

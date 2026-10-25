@@ -8,12 +8,15 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-navy sticky-top">
       <div class="container">
         <a class="navbar-brand" href="{{ url_for('main.index') }}">
-          <span class="brand-stamp" aria-hidden="true">CF</span>
-          <span class="fw-bold">CampusFix</span>
-          <span class="brand-sub d-none d-sm-inline">COEP Tech</span>
+          <span class="brand-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6" />
+            </svg>
+          </span>
+          <span>CampusFix</span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
@@ -49,6 +52,9 @@
               </li>
             {% else %}
               <li class="nav-item">
+                <span class="brand-context-label me-3 d-none d-lg-inline">Campus services</span>
+              </li>
+              <li class="nav-item">
                 <a class="nav-link {% if request.endpoint == 'auth.login' %}active{% endif %}" href="{{ url_for('auth.login') }}">Login</a>
               </li>
               <li class="nav-item">
@@ -80,7 +86,7 @@
     <footer class="campus-footer">
       <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div>
-          <span class="fw-bold text-dark">CampusFix</span>
+          <span class="fw-bold text-light">CampusFix</span>
           <span class="text-secondary mx-1">&middot;</span>
           <span class="text-secondary">COEP Technological University, Pune</span>
         </div>

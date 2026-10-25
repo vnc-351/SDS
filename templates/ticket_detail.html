@@ -15,7 +15,7 @@
           <span class="text-muted">&middot;</span>
           <span class="text-secondary small">{{ complaint['location'] }}</span>
         </div>
-        <h1 class="h2 mb-0 fw-bold">{{ complaint['title'] }}</h1>
+        <h1 class="h2 mb-0 fw-bold text-light">{{ complaint['title'] }}</h1>
       </div>
       <div>
         {% if complaint['status'] == 'Pending' %}
@@ -40,21 +40,21 @@
           </div>
           <div class="spec-item">
             <span class="spec-label">Trade Category</span>
-            <span class="spec-val">{{ complaint['category'] }}</span>
+            <span class="spec-val text-light">{{ complaint['category'] }}</span>
           </div>
           <div class="spec-item">
             <span class="spec-label">Facility Location</span>
-            <span class="spec-val">{{ complaint['location'] }}</span>
+            <span class="spec-val text-light">{{ complaint['location'] }}</span>
           </div>
           <div class="spec-item">
             <span class="spec-label">Submitted On</span>
-            <span class="spec-val num-tabular">{{ complaint['created_at'] }}</span>
+            <span class="spec-val num-tabular text-light">{{ complaint['created_at'] }}</span>
           </div>
         </div>
 
         <!-- Description Box -->
         <div class="mb-4">
-          <h2 class="h5 mb-2 fw-bold text-dark">Issue Description</h2>
+          <h2 class="h5 mb-2 fw-bold text-light">Issue Description</h2>
           <div class="spec-desc-box">
             {{ complaint['description'] }}
           </div>
@@ -63,8 +63,8 @@
         <!-- Attached Photo Evidence -->
         {% if complaint['image_filename'] %}
           <div class="mb-4">
-            <h2 class="h5 mb-2 fw-bold text-dark">Photo Evidence</h2>
-            <div class="border rounded p-2 bg-white d-inline-block shadow-sm">
+            <h2 class="h5 mb-2 fw-bold text-light">Photo Evidence</h2>
+            <div class="border rounded p-2 dark-photo-frame d-inline-block shadow-sm">
               <img src="{{ url_for('main.serve_uploaded_file', filename=complaint['image_filename']) }}"
                    alt="Complaint photo for {{ complaint['title'] }}"
                    class="img-fluid rounded"
@@ -80,27 +80,27 @@
         <div class="data-panel mb-4">
           <div class="data-panel-header">
             <h2 class="data-panel-title" style="font-size: 0.95rem;">AI Triage Guidance</h2>
-            <span class="text-muted" style="font-size: 0.72rem; text-transform: uppercase;">Advisory</span>
+            <span class="text-cyan small fw-semibold" style="font-size: 0.72rem; text-transform: uppercase;">Advisory</span>
           </div>
           <div class="p-3">
             <div class="mb-2">
-              <span class="text-muted small d-block">Suggested Category</span>
-              <strong class="text-dark">{{ complaint['ai_category'] or 'Not available' }}</strong>
+              <span class="text-secondary small d-block">Suggested Category</span>
+              <strong class="text-light">{{ complaint['ai_category'] or 'Not available' }}</strong>
             </div>
             <div class="mb-3">
-              <span class="text-muted small d-block">Suggested Urgency</span>
+              <span class="text-secondary small d-block">Suggested Urgency</span>
               {% if complaint['ai_priority'] == 'High' %}
-                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">High Priority</span>
+                <span class="badge priority-badge priority-high">High Priority</span>
               {% elif complaint['ai_priority'] == 'Medium' %}
-                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Medium Priority</span>
+                <span class="badge priority-badge priority-med">Medium Priority</span>
               {% elif complaint['ai_priority'] == 'Low' %}
-                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Low Priority</span>
+                <span class="badge priority-badge priority-low">Low Priority</span>
               {% else %}
-                <strong class="text-dark">{{ complaint['ai_priority'] or 'Not available' }}</strong>
+                <strong class="text-light">{{ complaint['ai_priority'] or 'Not available' }}</strong>
               {% endif %}
             </div>
             <div>
-              <span class="text-muted small d-block mb-1">Reasoning</span>
+              <span class="text-secondary small d-block mb-1">Reasoning</span>
               <p class="small text-secondary mb-0 lh-sm">{{ complaint['ai_explanation'] or 'No explanation recorded.' }}</p>
             </div>
           </div>
@@ -117,7 +117,7 @@
               <div class="history-timeline">
                 {% for row in history %}
                   <div class="history-step {{ 'is-pending' if row['new_status'] == 'Pending' else 'is-progress' if row['new_status'] == 'In Progress' else 'is-resolved' }}">
-                    <strong class="d-block text-dark small">{{ row['new_status'] }}</strong>
+                    <strong class="d-block text-light small">{{ row['new_status'] }}</strong>
                     <div class="text-muted small num-tabular" style="font-size: 0.75rem;">Changed: {{ row['changed_at'] }}</div>
                     <div class="text-secondary small" style="font-size: 0.75rem;">By: {{ row['changed_by_name'] or 'System' }}</div>
                   </div>
