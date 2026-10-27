@@ -66,12 +66,14 @@
             <span>{{ complaint['location'] }}</span>
           </div>
           <p class="issue-desc">{{ complaint['description'] }}</p>
+          {% if session.get('user_role') == 'admin' %}
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <span class="issue-ai-badge">
               <strong class="text-cyan">AI Priority:</strong> {{ complaint['ai_priority'] or 'Not evaluated' }}
             </span>
             <span class="text-muted small">&mdash; Advisory suggestion for administrative review</span>
           </div>
+          {% endif %}
         </div>
       </article>
     {% endfor %}

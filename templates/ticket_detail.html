@@ -76,7 +76,8 @@
 
       <!-- Right Column: AI Guidance & Status History Timeline -->
       <div class="col-lg-4">
-        <!-- AI Recommendation Panel -->
+        <!-- AI Recommendation Panel (Admin only) -->
+        {% if session.get('user_role') == 'admin' %}
         <div class="data-panel mb-4">
           <div class="data-panel-header">
             <h2 class="data-panel-title" style="font-size: 0.95rem;">AI Triage Guidance</h2>
@@ -105,6 +106,7 @@
             </div>
           </div>
         </div>
+        {% endif %}
 
         <!-- Status History Timeline -->
         <div class="data-panel">

@@ -44,4 +44,44 @@ document.addEventListener('DOMContentLoaded', function () {
       alert.style.transform = 'translateY(-6px)';
     });
   });
+
+  // Landing Page Hero Title: Select title per session and apply entrance animation
+  const rotatingTitle = document.querySelector('.hero-rotating-title');
+  if (rotatingTitle && !rotatingTitle.dataset.initialized) {
+    const phrases = Array.from(rotatingTitle.querySelectorAll('.rotate-phrase'));
+    if (phrases.length > 0) {
+      let targetIndex = 0;
+      try {
+        const sessionIndex = sessionStorage.getItem('campusfix_session_title_index');
+        if (sessionIndex !== null && !isNaN(parseInt(sessionIndex, 10))) {
+          // Preserve the same title during the current session
+          targetIndex = parseInt(sessionIndex, 10) % phrases.length;
+        } else {
+          // Advance to the next title in order for a new session
+          const lastIndex = localStorage.getItem('campusfix_last_title_index');
+          if (lastIndex !== null && !isNaN(parseInt(lastIndex, 10))) {
+            targetIndex = (parseInt(lastIndex, 10) + 1) % phrases.length;
+          } else {
+            targetIndex = 0;
+          }
+          localStorage.setItem('campusfix_last_title_index', targetIndex.toString());
+          sessionStorage.setItem('campusfix_session_title_index', targetIndex.toString());
+        }
+      } catch (e) {
+        // Fallback to first title if browser storage is unavailable
+        targetIndex = 0;
+      }
+
+      phrases.forEach(function (phrase, index) {
+        if (index === targetIndex) {
+          phrase.classList.add('is-active', 'hero-title-animate');
+          phrase.setAttribute('aria-hidden', 'false');
+        } else {
+          phrase.classList.remove('is-active', 'hero-title-animate');
+          phrase.setAttribute('aria-hidden', 'true');
+        }
+      });
+      rotatingTitle.dataset.initialized = 'true';
+    }
+  }
 });

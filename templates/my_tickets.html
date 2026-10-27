@@ -33,7 +33,6 @@
           <th>Category</th>
           <th>Location</th>
           <th>Status</th>
-          <th>AI Priority</th>
           <th>Submitted</th>
           <th class="text-end">Action</th>
         </tr>
@@ -52,17 +51,6 @@
               <span class="status-pill status-progress"><span class="status-dot"></span> In Progress</span>
             {% else %}
               <span class="status-pill status-resolved"><span class="status-dot"></span> Resolved</span>
-            {% endif %}
-          </td>
-          <td>
-            {% if complaint['ai_priority'] == 'High' %}
-              <span class="badge priority-badge priority-high">High</span>
-            {% elif complaint['ai_priority'] == 'Medium' %}
-              <span class="badge priority-badge priority-med">Medium</span>
-            {% elif complaint['ai_priority'] == 'Low' %}
-              <span class="badge priority-badge priority-low">Low</span>
-            {% else %}
-              <span class="text-muted small">{{ complaint['ai_priority'] or 'None' }}</span>
             {% endif %}
           </td>
           <td class="text-secondary small num-tabular">{{ complaint['created_at'][:10] }}</td>

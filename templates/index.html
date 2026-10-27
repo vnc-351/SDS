@@ -8,12 +8,50 @@
   <div class="row align-items-center g-4">
     <div class="col-lg-7">
       <div class="hero-tagline">CAMPUS MAINTENANCE</div>
-      <h1 class="hero-heading">Small problems. Better campus.</h1>
+      <h1 class="hero-heading hero-rotating-title" aria-live="polite">
+        <span class="rotate-phrase is-active" aria-hidden="false">A better campus starts with us.</span>
+        <span class="rotate-phrase" aria-hidden="true">Spot it. Report it. Resolve it.</span>
+        <span class="rotate-phrase" aria-hidden="true">A campus that works for everyone.</span>
+      </h1>
+      <script>
+        (function() {
+          try {
+            var container = document.querySelector('.hero-rotating-title');
+            if (!container) return;
+            var phrases = container.querySelectorAll('.rotate-phrase');
+            if (!phrases.length) return;
+            var target = 0;
+            var sIdx = sessionStorage.getItem('campusfix_session_title_index');
+            if (sIdx !== null && !isNaN(parseInt(sIdx, 10))) {
+              target = parseInt(sIdx, 10) % phrases.length;
+            } else {
+              var lIdx = localStorage.getItem('campusfix_last_title_index');
+              if (lIdx !== null && !isNaN(parseInt(lIdx, 10))) {
+                target = (parseInt(lIdx, 10) + 1) % phrases.length;
+              } else {
+                target = 0;
+              }
+              localStorage.setItem('campusfix_last_title_index', target.toString());
+              sessionStorage.setItem('campusfix_session_title_index', target.toString());
+            }
+            for (var i = 0; i < phrases.length; i++) {
+              if (i === target) {
+                phrases[i].className = 'rotate-phrase is-active hero-title-animate';
+                phrases[i].setAttribute('aria-hidden', 'false');
+              } else {
+                phrases[i].className = 'rotate-phrase';
+                phrases[i].setAttribute('aria-hidden', 'true');
+              }
+            }
+            container.dataset.initialized = 'true';
+          } catch (e) {}
+        })();
+      </script>
       <p class="hero-description">
         Report maintenance issues and follow their progress, from submission to resolution.
       </p>
 
-      <div class="d-flex gap-3 flex-wrap align-items-center mb-4">
+      <div class="d-flex gap-3 flex-wrap align-items-center">
         {% if session.get('user_id') %}
           {% if session.get('user_role') == 'admin' %}
             <a class="btn btn-primary btn-lg" href="{{ url_for('admin.admin_dashboard') }}">Open Admin Dashboard</a>
@@ -26,31 +64,6 @@
           <a class="btn btn-primary btn-lg" href="{{ url_for('auth.login') }}">Report an issue</a>
           <a class="btn btn-secondary-outline btn-lg" href="{{ url_for('issues.issue_board') }}">View issues &rarr;</a>
         {% endif %}
-      </div>
-
-      <!-- Compact Status Preview matching Screenshot -->
-      <div class="status-preview-box">
-        <div class="status-preview-row">
-          <div class="d-flex align-items-center gap-2">
-            <span class="status-dot-pending" aria-hidden="true"></span>
-            <strong class="status-preview-title">Pending</strong>
-          </div>
-          <span class="status-preview-desc">Awaiting review</span>
-        </div>
-        <div class="status-preview-row">
-          <div class="d-flex align-items-center gap-2">
-            <span class="status-dot-progress" aria-hidden="true"></span>
-            <strong class="status-preview-title">In progress</strong>
-          </div>
-          <span class="status-preview-desc">Being addressed</span>
-        </div>
-        <div class="status-preview-row">
-          <div class="d-flex align-items-center gap-2">
-            <span class="status-dot-resolved" aria-hidden="true"></span>
-            <strong class="status-preview-title">Resolved</strong>
-          </div>
-          <span class="status-preview-desc">Completed</span>
-        </div>
       </div>
     </div>
 
