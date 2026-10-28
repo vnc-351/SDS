@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}CampusFix | Admin Dashboard{% endblock %}
+
+{% block content %}
+<!-- Administrative Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 pb-3 border-bottom">
+  <div>
+    <span class="text-uppercase fw-bold text-cyan small letter-spacing-1">Facility Operations</span>
+    <h1 class="h2 mb-1 text-light">Administrator Dashboard</h1>
+    <p class="text-secondary mb-0 small">Review, triage, and update campus maintenance requests across COEP departments.</p>
+  </div>
+</div>
+
+<!-- Open Operational Metrics (4-Column Ledger) -->
+<div class="metrics-ledger cols-4">
+  <div class="metric-block metric-total">
+    <div class="metric-label">
+      <span>Total Issues</span>
+      <span class="metric-accent-line"></span>
+    </div>
+    <div class="metric-value">{{ stats['total'] }}</div>
+  </div>
+  <div class="metric-block metric-pending">
+    <div class="metric-label">
+      <span>Pending Triage</span>
+      <span class="metric-accent-line"></span>
+    </div>
+    <div class="metric-value">{{ stats['pending'] }}</div>
+  </div>
+  <div class="metric-block metric-progress">
+    <div class="metric-label">
+      <span>In Progress</span>
+      <span class="metric-accent-line"></span>
+    </div>
+    <div class="metric-value">{{ stats['progress'] }}</div>
+  </div>
+  <div class="metric-block metric-resolved">
+    <div class="metric-label">
+      <span>Resolved</span>
+      <span class="metric-accent-line"></span>
+    </div>
+    <div class="metric-value">{{ stats['resolved'] }}</div>
+  </div>
+</div>
+
+<!-- Compact Filter Toolbar -->
+<div class="filter-toolbar">
+  <form method="GET" class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label for="search" class="form-label small text-secondary text-uppercase fw-bold">Search</label>
+      <input type="text" class="form-control form-control-sm" id="search" name="search" value="{{ search_term }}" placeholder="Search by title or ticket ID...">
+    </div>
+    <div class="col-md-3">
+      <label for="status" class="form-label small text-secondary text-uppercase fw-bold">Status</label>
+      <select name="status" id="status" class="form-select form-select-sm">
+        <option value="">All statuses</option>
+        {% for status in statuses %}
+          <option value="{{ status }}" {% if status_filter == status %}selected{% endif %}>{{ status }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label for="category" class="form-label small text-secondary text-uppercase fw-bold">Category</label>
+      <select name="category" id="category" class="form-select form-select-sm">
+        <option value="">All categories</option>
+        {% for category in categories %}
+          <option value="{{ category }}" {% if category_filter == category %}selected{% endif %}>{{ category }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-sm btn-primary" type="submit">Apply Filter</button>
+    </div>
+  </form>
+</div>
+
+<!-- Complaints Ledger Table -->
+<div class="data-panel">
+  <div class="data-panel-header">
+    <h2 class="data-panel-title">Operational Complaint Ledger</h2>
+    <span class="text-muted small">Real-time reports</span>
+  </div>
+  {% if complaints %}
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>Ticket ID</th>
+          <th>Issue Title</th>
+          <th>Category</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>AI Priority</th>
+          <th>Votes</th>
+          <th>Photo</th>
+          <th style="min-width: 140px;">Update Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for complaint in complaints %}
+        <tr>
+          <td>
+            <a href="{{ url_for('issues.ticket_detail', ticket_id=complaint['id']) }}" class="ticket-ref">
+              {{ ticket_ref(complaint['id']) }}
+            </a>
+          </td>
+          <td>
+            <a href="{{ url_for('issues.ticket_detail', ticket_id=complaint['id']) }}" class="fw-bold text-light text-decoration-none">
+              {{ complaint['title'] }}
+            </a>
+          </td>
+          <td><span class="cat-tag">{{ complaint['category'] }}</span></td>
+          <td class="text-secondary small">{{ complaint['location'] }}</td>
+          <td>
+            {% if complaint['status'] == 'Pending' %}
+              <span class="status-pill status-pending"><span class="status-dot"></span> Pending</span>
+            {% elif complaint['status'] == 'In Progress' %}
+              <span class="status-pill status-progress"><span class="status-dot"></span> In Progress</span>
+            {% else %}
+              <span class="status-pill status-resolved"><span class="status-dot"></span> Resolved</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if complaint['ai_priority'] == 'High' %}
+              <span class="badge priority-badge priority-high">High</span>
+            {% elif complaint['ai_priority'] == 'Medium' %}
+              <span class="badge priority-badge priority-med">Medium</span>
+            {% elif complaint['ai_priority'] == 'Low' %}
+              <span class="badge priority-badge priority-low">Low</span>
+            {% else %}
+              <span class="text-muted small">{{ complaint['ai_priority'] or 'None' }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="fw-bold num-tabular text-light">{{ complaint['upvotes'] - complaint['downvotes'] }}</span>
+            <span class="text-muted small d-block">({{ complaint['upvotes'] }}&uarr; / {{ complaint['downvotes'] }}&darr;)</span>
+          </td>
+          <td>
+            {% if complaint['image_filename'] %}
+              <img src="{{ url_for('main.serve_uploaded_file', filename=complaint['image_filename']) }}" alt="Photo preview" class="img-preview">
+            {% else %}
+              <span class="text-muted small">None</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('admin.update_status', ticket_id=complaint['id']) }}" class="d-flex flex-column gap-1">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <select class="form-select form-select-sm" name="status" aria-label="Update ticket status">
+                {% for status in statuses %}
+                  <option value="{{ status }}" {% if complaint['status'] == status %}selected{% endif %}>{{ status }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-sm btn-outline-cyan py-0 px-2" style="font-size: 0.75rem;">Save</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="p-5 text-center text-secondary">
+      <p class="mb-1 fw-semibold text-light">No complaints match the chosen filters</p>
+      <p class="small text-muted mb-0">Try clearing the search query or status filter to see other records.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

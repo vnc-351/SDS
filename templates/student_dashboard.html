@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}CampusFix | Student Dashboard{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 pb-3 border-bottom">
+  <div>
+    <span class="text-uppercase fw-bold text-cyan small letter-spacing-1">Student Portal</span>
+    <h1 class="h2 mb-1 text-light">Welcome, {{ user['name'] }}</h1>
+    <p class="text-secondary mb-0 small">Track your submitted complaints and maintenance progress across campus.</p>
+  </div>
+  <div>
+    <a href="{{ url_for('issues.report_issue') }}" class="btn btn-primary">
+      Report a New Issue
+    </a>
+  </div>
+</div>
+
+<!-- Open Metric Blocks (Separated by Fine Vertical Dividers) -->
+<div class="metrics-ledger cols-3">
+  <div class="metric-block metric-pending">
+    <div class="metric-label">
+      <span>Pending Review</span>
+      <span class="metric-accent-line"></span>
+    </div>
+    <div class="metric-value">{{ stats['pending'] }}</div>
+  </div>
+  <div class="metric-block metric-progress">
+    <div class="metric-label">
+      <span>In Progress</span>
+      <span class="metric-accent-line"></span>
+    </div>
+    <div class="metric-value">{{ stats['progress'] }}</div>
+  </div>
+  <div class="metric-block metric-resolved">
+    <div class="metric-label">
+      <span>Resolved</span>
+      <span class="metric-accent-line"></span>
+    </div>
+    <div class="metric-value">{{ stats['resolved'] }}</div>
+  </div>
+</div>
+
+<!-- Recent Complaints Ledger -->
+<div class="data-panel">
+  <div class="data-panel-header">
+    <h2 class="data-panel-title">Recent Complaints</h2>
+    <span class="text-muted small">Submitted by you</span>
+  </div>
+  {% if complaints %}
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>Ticket ID</th>
+          <th>Issue Title</th>
+          <th>Category</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Submitted</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for complaint in complaints %}
+        <tr>
+          <td><span class="ticket-ref">{{ ticket_ref(complaint['id']) }}</span></td>
+          <td class="fw-bold text-light">{{ complaint['title'] }}</td>
+          <td><span class="cat-tag">{{ complaint['category'] }}</span></td>
+          <td class="text-secondary small">{{ complaint['location'] }}</td>
+          <td>
+            {% if complaint['status'] == 'Pending' %}
+              <span class="status-pill status-pending"><span class="status-dot"></span> Pending</span>
+            {% elif complaint['status'] == 'In Progress' %}
+              <span class="status-pill status-progress"><span class="status-dot"></span> In Progress</span>
+            {% else %}
+              <span class="status-pill status-resolved"><span class="status-dot"></span> Resolved</span>
+            {% endif %}
+          </td>
+          <td class="text-secondary small num-tabular">{{ complaint['created_at'][:10] }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('issues.ticket_detail', ticket_id=complaint['id']) }}" class="btn btn-sm btn-outline-cyan">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="p-5 text-center text-secondary">
+      <p class="mb-2 fw-semibold text-light">No complaints submitted yet</p>
+      <p class="small text-muted mb-3">Notice an infrastructure fault on campus? Submit a work order to get it fixed.</p>
+      <a href="{{ url_for('issues.report_issue') }}" class="btn btn-sm btn-primary">Report an Issue</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
