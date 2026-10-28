@@ -8,45 +8,9 @@
   <div class="row align-items-center g-4">
     <div class="col-lg-7">
       <div class="hero-tagline">CAMPUS MAINTENANCE</div>
-      <h1 class="hero-heading hero-rotating-title" aria-live="polite">
-        <span class="rotate-phrase is-active" aria-hidden="false">A better campus starts with us.</span>
-        <span class="rotate-phrase" aria-hidden="true">Spot it. Report it. Resolve it.</span>
-        <span class="rotate-phrase" aria-hidden="true">A campus that works for everyone.</span>
+      <h1 class="hero-heading">
+        A better campus starts with us.
       </h1>
-      <script>
-        (function() {
-          try {
-            var container = document.querySelector('.hero-rotating-title');
-            if (!container) return;
-            var phrases = container.querySelectorAll('.rotate-phrase');
-            if (!phrases.length) return;
-            var target = 0;
-            var sIdx = sessionStorage.getItem('campusfix_session_title_index');
-            if (sIdx !== null && !isNaN(parseInt(sIdx, 10))) {
-              target = parseInt(sIdx, 10) % phrases.length;
-            } else {
-              var lIdx = localStorage.getItem('campusfix_last_title_index');
-              if (lIdx !== null && !isNaN(parseInt(lIdx, 10))) {
-                target = (parseInt(lIdx, 10) + 1) % phrases.length;
-              } else {
-                target = 0;
-              }
-              localStorage.setItem('campusfix_last_title_index', target.toString());
-              sessionStorage.setItem('campusfix_session_title_index', target.toString());
-            }
-            for (var i = 0; i < phrases.length; i++) {
-              if (i === target) {
-                phrases[i].className = 'rotate-phrase is-active hero-title-animate';
-                phrases[i].setAttribute('aria-hidden', 'false');
-              } else {
-                phrases[i].className = 'rotate-phrase';
-                phrases[i].setAttribute('aria-hidden', 'true');
-              }
-            }
-            container.dataset.initialized = 'true';
-          } catch (e) {}
-        })();
-      </script>
       <p class="hero-description">
         Report maintenance issues and follow their progress, from submission to resolution.
       </p>
