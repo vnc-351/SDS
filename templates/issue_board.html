@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}CampusFix | Campus Issues{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pb-3 border-bottom">
+  <div>
+    <span class="text-uppercase fw-bold text-cyan small letter-spacing-1">Community Triage</span>
+    <h1 class="h2 mb-1 text-light">Open Campus Issues</h1>
+    <p class="text-secondary mb-0 small">Vote for pending infrastructure faults to help facility managers prioritize urgent campus repairs.</p>
+  </div>
+  {% if session.get('user_role') != 'admin' %}
+    <div>
+      <a href="{{ url_for('issues.report_issue') }}" class="btn btn-primary">
+        Report an Issue
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Structured Issue Ledger (NOT Repetitive Cards!) -->
+{% if complaints %}
+  <div class="issue-ledger">
+    {% for complaint in complaints %}
+      <article class="issue-row">
+        <!-- Vote & Score Column -->
+        <div class="issue-vote-box">
+          <div class="issue-score">{{ complaint['upvotes'] - complaint['downvotes'] }}</div>
+          <div class="text-muted small mb-2 text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.05em;">Score</div>
+          {% if session.get('user_role') != 'admin' %}
+            <form method="POST" action="{{ url_for('issues.vote_for_issue', ticket_id=complaint['id']) }}" class="d-flex flex-column gap-1 w-100">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" name="vote" value="1"
+                      class="btn btn-sm btn-vote {{ 'btn-success text-white' if complaint['my_vote'] == 1 else 'btn-outline-success' }}"
+                      aria-label="Upvote this issue">
+                Upvote {{ complaint['upvotes'] }}
+              </button>
+              <button type="submit" name="vote" value="-1"
+                      class="btn btn-sm btn-vote {{ 'btn-danger text-white' if complaint['my_vote'] == -1 else 'btn-outline-danger' }}"
+                      aria-label="Downvote this issue">
+                Downvote {{ complaint['downvotes'] }}
+              </button>
+            </form>
+          {% else %}
+            <div class="text-muted small text-center" style="font-size: 0.72rem;">
+              {{ complaint['upvotes'] }} up<br>{{ complaint['downvotes'] }} down
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Issue Information Column -->
+        <div class="issue-content">
+          <div class="issue-header-line">
+            <h2 class="issue-title">
+              <a href="{{ url_for('issues.ticket_detail', ticket_id=complaint['id']) }}" class="text-light text-decoration-none">
+                {{ complaint['title'] }}
+              </a>
+            </h2>
+          </div>
+          <div class="issue-meta-line">
+            <span class="ticket-ref">{{ ticket_ref(complaint['id']) }}</span>
+            <span class="text-muted">&middot;</span>
+            <span class="cat-tag">{{ complaint['category'] }}</span>
+            <span class="text-muted">&middot;</span>
+            <span>{{ complaint['location'] }}</span>
+          </div>
+          <p class="issue-desc">{{ complaint['description'] }}</p>
+          {% if session.get('user_role') == 'admin' %}
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="issue-ai-badge">
+              <strong class="text-cyan">AI Priority:</strong> {{ complaint['ai_priority'] or 'Not evaluated' }}
+            </span>
+            <span class="text-muted small">&mdash; Advisory suggestion for administrative review</span>
+          </div>
+          {% endif %}
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="data-panel p-5 text-center text-secondary">
+    <p class="fw-semibold text-light mb-1">No Open Issues</p>
+    <p class="small text-muted mb-0">There are no open campus issues to vote on right now. All reported issues have been processed.</p>
+  </div>
+{% endif %}
+{% endblock %}

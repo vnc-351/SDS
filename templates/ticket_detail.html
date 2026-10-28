@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}CampusFix | Ticket {{ ticket_ref(complaint['id']) }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-11">
+    <!-- Specification Header -->
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 pb-3 mb-4 border-bottom">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="ticket-ref fs-6">{{ ticket_ref(complaint['id']) }}</span>
+          <span class="text-muted">&middot;</span>
+          <span class="cat-tag">{{ complaint['category'] }}</span>
+          <span class="text-muted">&middot;</span>
+          <span class="text-secondary small">{{ complaint['location'] }}</span>
+        </div>
+        <h1 class="h2 mb-0 fw-bold text-light">{{ complaint['title'] }}</h1>
+      </div>
+      <div>
+        {% if complaint['status'] == 'Pending' %}
+          <span class="status-pill status-pending fs-6 px-3 py-1"><span class="status-dot"></span> Pending Review</span>
+        {% elif complaint['status'] == 'In Progress' %}
+          <span class="status-pill status-progress fs-6 px-3 py-1"><span class="status-dot"></span> In Progress</span>
+        {% else %}
+          <span class="status-pill status-resolved fs-6 px-3 py-1"><span class="status-dot"></span> Resolved</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Main Content & Sidebar -->
+    <div class="row g-4">
+      <!-- Left Column: Specs, Description, Photo -->
+      <div class="col-lg-8">
+        <!-- Technical Specifications Grid -->
+        <div class="spec-grid mb-4">
+          <div class="spec-item">
+            <span class="spec-label">Ticket ID</span>
+            <span class="spec-val ticket-ref">{{ ticket_ref(complaint['id']) }}</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Trade Category</span>
+            <span class="spec-val text-light">{{ complaint['category'] }}</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Facility Location</span>
+            <span class="spec-val text-light">{{ complaint['location'] }}</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Submitted On</span>
+            <span class="spec-val num-tabular text-light">{{ complaint['created_at'] }}</span>
+          </div>
+        </div>
+
+        <!-- Description Box -->
+        <div class="mb-4">
+          <h2 class="h5 mb-2 fw-bold text-light">Issue Description</h2>
+          <div class="spec-desc-box">
+            {{ complaint['description'] }}
+          </div>
+        </div>
+
+        <!-- Attached Photo Evidence -->
+        {% if complaint['image_filename'] %}
+          <div class="mb-4">
+            <h2 class="h5 mb-2 fw-bold text-light">Photo Evidence</h2>
+            <div class="border rounded p-2 dark-photo-frame d-inline-block shadow-sm">
+              <img src="{{ url_for('main.serve_uploaded_file', filename=complaint['image_filename']) }}"
+                   alt="Complaint photo for {{ complaint['title'] }}"
+                   class="img-fluid rounded"
+                   style="max-height: 480px; object-fit: contain;">
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Right Column: AI Guidance & Status History Timeline -->
+      <div class="col-lg-4">
+        <!-- AI Recommendation Panel (Admin only) -->
+        {% if session.get('user_role') == 'admin' %}
+        <div class="data-panel mb-4">
+          <div class="data-panel-header">
+            <h2 class="data-panel-title" style="font-size: 0.95rem;">AI Triage Guidance</h2>
+            <span class="text-cyan small fw-semibold" style="font-size: 0.72rem; text-transform: uppercase;">Advisory</span>
+          </div>
+          <div class="p-3">
+            <div class="mb-2">
+              <span class="text-secondary small d-block">Suggested Category</span>
+              <strong class="text-light">{{ complaint['ai_category'] or 'Not available' }}</strong>
+            </div>
+            <div class="mb-3">
+              <span class="text-secondary small d-block">Suggested Urgency</span>
+              {% if complaint['ai_priority'] == 'High' %}
+                <span class="badge priority-badge priority-high">High Priority</span>
+              {% elif complaint['ai_priority'] == 'Medium' %}
+                <span class="badge priority-badge priority-med">Medium Priority</span>
+              {% elif complaint['ai_priority'] == 'Low' %}
+                <span class="badge priority-badge priority-low">Low Priority</span>
+              {% else %}
+                <strong class="text-light">{{ complaint['ai_priority'] or 'Not available' }}</strong>
+              {% endif %}
+            </div>
+            <div>
+              <span class="text-secondary small d-block mb-1">Reasoning</span>
+              <p class="small text-secondary mb-0 lh-sm">{{ complaint['ai_explanation'] or 'No explanation recorded.' }}</p>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Status History Timeline -->
+        <div class="data-panel">
+          <div class="data-panel-header">
+            <h2 class="data-panel-title" style="font-size: 0.95rem;">Status History</h2>
+            <span class="text-muted" style="font-size: 0.72rem; text-transform: uppercase;">Audit Trail</span>
+          </div>
+          <div class="p-3">
+            {% if history %}
+              <div class="history-timeline">
+                {% for row in history %}
+                  <div class="history-step {{ 'is-pending' if row['new_status'] == 'Pending' else 'is-progress' if row['new_status'] == 'In Progress' else 'is-resolved' }}">
+                    <strong class="d-block text-light small">{{ row['new_status'] }}</strong>
+                    <div class="text-muted small num-tabular" style="font-size: 0.75rem;">Changed: {{ row['changed_at'] }}</div>
+                    <div class="text-secondary small" style="font-size: 0.75rem;">By: {{ row['changed_by_name'] or 'System' }}</div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-muted small mb-0">No history recorded yet.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
