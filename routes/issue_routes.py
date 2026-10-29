@@ -65,8 +65,7 @@ def report_issue():
         description = (request.form.get("description") or "").strip()
         file = request.files.get("image")
 
-        is_valid = bool(title) and bool(category) and bool(location) and bool(description)
-        if not is_valid:
+        if not all((title, category, location, description)):
             flash("Please fill in all required fields.", "error")
             return render_template("report_issue.html", categories=CATEGORY_CHOICES)
 
@@ -92,7 +91,7 @@ def report_issue():
         ai_result = get_ticket_ai_suggestions(title, description, category)
         ai_category = ai_result.get("category") if ai_result.get("status") == "ok" else None
         ai_priority = ai_result.get("priority") if ai_result.get("status") == "ok" else None
-        ai_explanation = ai_result.get("explanation") if ai_result.get("status") == "ok" else ai_result.get("explanation", "AI suggestion unavailable.")
+        ai_explanation = ai_result.get("explanation", "AI suggestion unavailable.")
 
         conn = get_db()
         cursor = conn.execute(
