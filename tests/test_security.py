@@ -2,7 +2,6 @@ import io
 import os
 import re
 import shutil
-import sqlite3
 import tempfile
 import unittest
 
@@ -10,35 +9,30 @@ from werkzeug.security import generate_password_hash
 
 from app import create_app
 from config import resolve_secret_key
+from pg_helpers import TEST_DATABASE_URL, connect, reset_db
 
 
 class SecurityBase(unittest.TestCase):
     """Shared setup: one app, an owner, another student and an admin. Holds no tests itself."""
 
     def setUp(self):
-        fd, self.db_path = tempfile.mkstemp(suffix=".db")
-        os.close(fd)
+        reset_db()
         self.upload_dir = tempfile.mkdtemp()
-        self.app = create_app(testing=True, database_path=self.db_path, upload_folder=self.upload_dir)
+        self.app = create_app(testing=True, database_url=TEST_DATABASE_URL, upload_folder=self.upload_dir)
         self.client = self.app.test_client()
         self.owner_id = self.create_user("owner@example.com")
         self.other_id = self.create_user("other@example.com")
         self.admin_id = self.create_user("admin@example.com", role="admin")
 
     def tearDown(self):
-        os.remove(self.db_path)
         shutil.rmtree(self.upload_dir, ignore_errors=True)
 
     def create_user(self, email, role="student"):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.execute(
-            "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
-            (email.split("@")[0], email, generate_password_hash("Passw0rd1"), role),
-        )
-        conn.commit()
-        user_id = cursor.lastrowid
-        conn.close()
-        return user_id
+        with connect() as conn:
+            return conn.execute(
+                "INSERT INTO users (name, email, password_hash, role) VALUES (%s, %s, %s, %s) RETURNING id",
+                (email.split("@")[0], email, generate_password_hash("Passw0rd1"), role),
+            ).fetchone()[0]
 
     def login(self, email):
         self.client.post("/login", data={"email": email, "password": "Passw0rd1"})
@@ -46,17 +40,12 @@ class SecurityBase(unittest.TestCase):
     def add_complaint_with_image(self, filename="photo.png", content=b"image-bytes"):
         with open(os.path.join(self.upload_dir, filename), "wb") as handle:
             handle.write(content)
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.execute(
-            "INSERT INTO complaints (user_id, title, category, location, description, image_filename, status, updated_at) "
-            "VALUES (?, 'Broken light', 'Electrical', 'Block B', 'Dark.', ?, 'Pending', CURRENT_TIMESTAMP)",
-            (self.owner_id, filename),
-        )
-        conn.commit()
-        complaint_id = cursor.lastrowid
-        conn.close()
-        return complaint_id
-
+        with connect() as conn:
+            return conn.execute(
+                "INSERT INTO complaints (user_id, title, category, location, description, image_filename, status, updated_at) "
+                "VALUES (%s, 'Broken light', 'Electrical', 'Block B', 'Dark.', %s, 'Pending', CURRENT_TIMESTAMP) RETURNING id",
+                (self.owner_id, filename),
+            ).fetchone()[0]
 
 
 class SecurityTests(SecurityBase):
@@ -65,10 +54,8 @@ class SecurityTests(SecurityBase):
     # --- Bug 2: a session for a user that no longer exists -------------------------------
     def test_deleted_user_session_is_sent_to_login_instead_of_crashing(self):
         self.login("other@example.com")
-        conn = sqlite3.connect(self.db_path)
-        conn.execute("DELETE FROM users WHERE id = ?", (self.other_id,))
-        conn.commit()
-        conn.close()
+        with connect() as conn:
+            conn.execute("DELETE FROM users WHERE id = %s", (self.other_id,))
 
         for path in ("/dashboard", "/archive", "/ticket/1", "/report_issue", "/issues", "/my_tickets"):
             response = self.client.get(path)
@@ -77,10 +64,8 @@ class SecurityTests(SecurityBase):
 
     def test_stale_session_is_cleared_after_redirect(self):
         self.login("other@example.com")
-        conn = sqlite3.connect(self.db_path)
-        conn.execute("DELETE FROM users WHERE id = ?", (self.other_id,))
-        conn.commit()
-        conn.close()
+        with connect() as conn:
+            conn.execute("DELETE FROM users WHERE id = %s", (self.other_id,))
         self.client.get("/dashboard")
         with self.client.session_transaction() as flask_session:
             self.assertNotIn("user_id", flask_session)
@@ -142,22 +127,17 @@ class CsrfTests(SecurityBase):
         return match.group(1).decode()
 
     def db_value(self, sql, params=()):
-        conn = sqlite3.connect(self.db_path)
-        value = conn.execute(sql, params).fetchone()
-        conn.close()
+        with connect() as conn:
+            value = conn.execute(sql, params).fetchone()
         return value[0] if value else None
 
     def add_open_complaint(self):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.execute(
-            "INSERT INTO complaints (user_id, title, category, location, description, status, updated_at) "
-            "VALUES (?, 'Leaky tap', 'Plumbing', 'Block A', 'Dripping.', 'Pending', CURRENT_TIMESTAMP)",
-            (self.owner_id,),
-        )
-        conn.commit()
-        complaint_id = cursor.lastrowid
-        conn.close()
-        return complaint_id
+        with connect() as conn:
+            return conn.execute(
+                "INSERT INTO complaints (user_id, title, category, location, description, status, updated_at) "
+                "VALUES (%s, 'Leaky tap', 'Plumbing', 'Block A', 'Dripping.', 'Pending', CURRENT_TIMESTAMP) RETURNING id",
+                (self.owner_id,),
+            ).fetchone()[0]
 
     def test_every_post_form_contains_a_csrf_token(self):
         self.add_open_complaint()
@@ -199,27 +179,27 @@ class CsrfTests(SecurityBase):
     def test_registration_without_token_creates_no_account(self):
         self.client.post("/register", data={"name": "New", "email": "new@example.com",
                                             "password": "Passw0rd1", "confirm_password": "Passw0rd1"})
-        self.assertIsNone(self.db_value("SELECT id FROM users WHERE email = ?", ("new@example.com",)))
+        self.assertIsNone(self.db_value("SELECT id FROM users WHERE email = %s", ("new@example.com",)))
 
     def test_admin_status_change_without_token_is_rejected(self):
         complaint_id = self.add_open_complaint()
         self.login_with_token("admin@example.com")
         self.client.post(f"/admin/update_status/{complaint_id}", data={"status": "Resolved"})
-        self.assertEqual(self.db_value("SELECT status FROM complaints WHERE id = ?", (complaint_id,)), "Pending")
+        self.assertEqual(self.db_value("SELECT status FROM complaints WHERE id = %s", (complaint_id,)), "Pending")
 
         token = self.token_from("/admin")
         self.client.post(f"/admin/update_status/{complaint_id}", data={"status": "Resolved", "csrf_token": token})
-        self.assertEqual(self.db_value("SELECT status FROM complaints WHERE id = ?", (complaint_id,)), "Resolved")
+        self.assertEqual(self.db_value("SELECT status FROM complaints WHERE id = %s", (complaint_id,)), "Resolved")
 
     def test_vote_without_token_is_rejected_and_with_token_is_recorded(self):
         complaint_id = self.add_open_complaint()
         self.login_with_token("other@example.com")
         self.client.post(f"/issues/{complaint_id}/vote", data={"vote": "1"})
-        self.assertIsNone(self.db_value("SELECT vote FROM complaint_votes WHERE complaint_id = ?", (complaint_id,)))
+        self.assertIsNone(self.db_value("SELECT vote FROM complaint_votes WHERE complaint_id = %s", (complaint_id,)))
 
         token = self.token_from("/issues")
         self.client.post(f"/issues/{complaint_id}/vote", data={"vote": "1", "csrf_token": token})
-        self.assertEqual(self.db_value("SELECT vote FROM complaint_votes WHERE complaint_id = ?", (complaint_id,)), 1)
+        self.assertEqual(self.db_value("SELECT vote FROM complaint_votes WHERE complaint_id = %s", (complaint_id,)), 1)
 
     def test_complaint_submission_without_token_is_rejected(self):
         self.login_with_token("owner@example.com")
@@ -249,15 +229,16 @@ class SecretKeyTests(unittest.TestCase):
 class AdminNavigationTests(SecurityBase):
     """Student-only links are hidden from admins (decision 4)."""
 
+    def add_leaky_tap(self):
+        with connect() as conn:
+            conn.execute(
+                "INSERT INTO complaints (user_id, title, category, location, description, status, updated_at) "
+                "VALUES (%s, 'Leaky tap', 'Plumbing', 'Block A', 'Dripping.', 'Pending', CURRENT_TIMESTAMP)",
+                (self.owner_id,),
+            )
+
     def test_admin_does_not_see_student_links_or_vote_buttons(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.execute(
-            "INSERT INTO complaints (user_id, title, category, location, description, status, updated_at) "
-            "VALUES (?, 'Leaky tap', 'Plumbing', 'Block A', 'Dripping.', 'Pending', CURRENT_TIMESTAMP)",
-            (self.owner_id,),
-        )
-        conn.commit()
-        conn.close()
+        self.add_leaky_tap()
         self.login("admin@example.com")
         for path in ("/admin", "/issues", "/archive"):
             html = self.client.get(path).data
@@ -268,14 +249,7 @@ class AdminNavigationTests(SecurityBase):
         self.assertNotIn(b"Upvote", self.client.get("/issues").data)
 
     def test_student_still_sees_student_links_and_vote_buttons(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.execute(
-            "INSERT INTO complaints (user_id, title, category, location, description, status, updated_at) "
-            "VALUES (?, 'Leaky tap', 'Plumbing', 'Block A', 'Dripping.', 'Pending', CURRENT_TIMESTAMP)",
-            (self.owner_id,),
-        )
-        conn.commit()
-        conn.close()
+        self.add_leaky_tap()
         self.login("owner@example.com")
         html = self.client.get("/issues").data
         for text in (b"My Tickets", b"Report Issue", b"Report an Issue", b"Upvote", b"Downvote"):

@@ -100,7 +100,8 @@ def report_issue():
             INSERT INTO complaints (
                 user_id, title, category, location, description, image_filename,
                 ai_category, ai_priority, ai_explanation, status, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', CURRENT_TIMESTAMP)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'Pending', CURRENT_TIMESTAMP)
+            RETURNING id
             """,
             (
                 user["id"],
@@ -114,11 +115,10 @@ def report_issue():
                 ai_explanation,
             ),
         )
-        conn.commit()
-        complaint_id = cursor.lastrowid
+        complaint_id = cursor.fetchone()["id"]
 
         conn.execute(
-            "INSERT INTO status_history (complaint_id, previous_status, new_status, changed_by) VALUES (?, ?, ?, ?)",
+            "INSERT INTO status_history (complaint_id, previous_status, new_status, changed_by) VALUES (%s, %s, %s, %s)",
             (complaint_id, "New", "Pending", user["id"]),
         )
         conn.commit()
@@ -135,13 +135,15 @@ def issue_board():
     conn = get_db()
     complaints = conn.execute(
         """
+        SELECT * FROM (
         SELECT c.*,
             (SELECT COUNT(*) FROM complaint_votes v WHERE v.complaint_id = c.id AND v.vote = 1) AS upvotes,
             (SELECT COUNT(*) FROM complaint_votes v WHERE v.complaint_id = c.id AND v.vote = -1) AS downvotes,
-            (SELECT v.vote FROM complaint_votes v WHERE v.complaint_id = c.id AND v.user_id = ?) AS my_vote
+            (SELECT v.vote FROM complaint_votes v WHERE v.complaint_id = c.id AND v.user_id = %s) AS my_vote
         FROM complaints c
         WHERE c.status != 'Resolved'
-        ORDER BY (upvotes - downvotes) DESC, c.created_at DESC
+        ) t
+        ORDER BY (upvotes - downvotes) DESC, created_at DESC
         """,
         (session["user_id"],),
     ).fetchall()
@@ -163,7 +165,7 @@ def vote_for_issue(ticket_id):
 
     conn = get_db()
     complaint = conn.execute(
-        "SELECT id, status FROM complaints WHERE id = ?",
+        "SELECT id, status FROM complaints WHERE id = %s",
         (ticket_id,),
     ).fetchone()
     if complaint is None or complaint["status"] == "Resolved":
@@ -171,19 +173,19 @@ def vote_for_issue(ticket_id):
         return redirect(url_for("issues.issue_board"))
 
     current_vote = conn.execute(
-        "SELECT vote FROM complaint_votes WHERE complaint_id = ? AND user_id = ?",
+        "SELECT vote FROM complaint_votes WHERE complaint_id = %s AND user_id = %s",
         (ticket_id, session["user_id"]),
     ).fetchone()
     vote_value = int(vote)
     if current_vote is not None and current_vote["vote"] == vote_value:
         conn.execute(
-            "DELETE FROM complaint_votes WHERE complaint_id = ? AND user_id = ?",
+            "DELETE FROM complaint_votes WHERE complaint_id = %s AND user_id = %s",
             (ticket_id, session["user_id"]),
         )
         flash("Your vote was removed.", "success")
     elif current_vote is None:
         conn.execute(
-            "INSERT INTO complaint_votes (complaint_id, user_id, vote) VALUES (?, ?, ?)",
+            "INSERT INTO complaint_votes (complaint_id, user_id, vote) VALUES (%s, %s, %s)",
             (ticket_id, session["user_id"], vote_value),
         )
         flash("Your vote was recorded.", "success")
@@ -191,8 +193,8 @@ def vote_for_issue(ticket_id):
         conn.execute(
             """
             UPDATE complaint_votes
-            SET vote = ?, created_at = CURRENT_TIMESTAMP
-            WHERE complaint_id = ? AND user_id = ?
+            SET vote = %s, created_at = CURRENT_TIMESTAMP
+            WHERE complaint_id = %s AND user_id = %s
             """,
             (vote_value, ticket_id, session["user_id"]),
         )
@@ -210,7 +212,7 @@ def archived_tickets():
         complaints = conn.execute(
             """
             SELECT * FROM complaints
-            WHERE status = 'Resolved' AND updated_at <= datetime('now', '-1 day')
+            WHERE status = 'Resolved' AND updated_at <= NOW() - INTERVAL '1 day'
             ORDER BY updated_at DESC
             """
         ).fetchall()
@@ -218,8 +220,8 @@ def archived_tickets():
         complaints = conn.execute(
             """
             SELECT * FROM complaints
-            WHERE user_id = ? AND status = 'Resolved'
-                AND updated_at <= datetime('now', '-1 day')
+            WHERE user_id = %s AND status = 'Resolved'
+                AND updated_at <= NOW() - INTERVAL '1 day'
             ORDER BY updated_at DESC
             """,
             (user["id"],),
@@ -236,7 +238,7 @@ def archived_tickets():
 def ticket_detail(ticket_id):
     user = get_logged_user()
     conn = get_db()
-    complaint = conn.execute("SELECT * FROM complaints WHERE id = ?", (ticket_id,)).fetchone()
+    complaint = conn.execute("SELECT * FROM complaints WHERE id = %s", (ticket_id,)).fetchone()
     if complaint is None:
         flash("Ticket not found.", "error")
         if user["role"] == "admin":
@@ -251,7 +253,7 @@ def ticket_detail(ticket_id):
         SELECT h.*, u.name as changed_by_name
         FROM status_history h
         LEFT JOIN users u ON h.changed_by = u.id
-        WHERE h.complaint_id = ?
+        WHERE h.complaint_id = %s
         ORDER BY h.changed_at DESC
         """,
         (ticket_id,),
