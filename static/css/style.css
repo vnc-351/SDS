@@ -277,56 +277,6 @@ time {
 }
 
 /* Hero rotating title: CSS Grid layout prevents layout shifts across different title lengths */
-.hero-rotating-title {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
-  align-items: start;
-}
-
-.hero-rotating-title .rotate-phrase {
-  grid-area: 1 / 1;
-  display: block;
-  opacity: 0;
-  transform: translateY(8px);
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.hero-rotating-title .rotate-phrase.is-active {
-  opacity: 1;
-  transform: translateY(0);
-  visibility: visible;
-  pointer-events: auto;
-}
-
-/* Subtle entrance animation on initial page load (soft fade-in + slight upward movement over 600ms) */
-@keyframes heroTitleEntrance {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.hero-rotating-title .rotate-phrase.is-active.hero-title-animate {
-  animation: heroTitleEntrance 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Accessibility: respect prefers-reduced-motion (display title immediately without animation/movement) */
-@media (prefers-reduced-motion: reduce) {
-  .hero-rotating-title .rotate-phrase,
-  .hero-rotating-title .rotate-phrase.is-active,
-  .hero-rotating-title .rotate-phrase.is-active.hero-title-animate {
-    animation: none !important;
-    transform: none !important;
-    transition: none !important;
-  }
-}
-
 .hero-description {
   color: var(--cf-text-secondary);
   font-size: 1.05rem;
