@@ -44,7 +44,7 @@
               </td>
               <td><span class="cat-tag">{{ complaint['category'] }}</span></td>
               <td class="text-secondary small">{{ complaint['location'] }}</td>
-              <td class="text-secondary small num-tabular">{{ complaint['updated_at'] }}</td>
+              <td class="text-secondary small num-tabular">{{ complaint['updated_at'].strftime('%Y-%m-%d %H:%M') }}</td>
               <td class="text-end">
                 <a href="{{ url_for('issues.ticket_detail', ticket_id=complaint['id']) }}" class="btn btn-sm btn-outline-cyan">View</a>
               </td>

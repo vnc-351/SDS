@@ -48,7 +48,7 @@
           </div>
           <div class="spec-item">
             <span class="spec-label">Submitted On</span>
-            <span class="spec-val num-tabular text-light">{{ complaint['created_at'] }}</span>
+            <span class="spec-val num-tabular text-light">{{ complaint['created_at'].strftime('%Y-%m-%d %H:%M') }}</span>
           </div>
         </div>
 
@@ -120,7 +120,7 @@
                 {% for row in history %}
                   <div class="history-step {{ 'is-pending' if row['new_status'] == 'Pending' else 'is-progress' if row['new_status'] == 'In Progress' else 'is-resolved' }}">
                     <strong class="d-block text-light small">{{ row['new_status'] }}</strong>
-                    <div class="text-muted small num-tabular" style="font-size: 0.75rem;">Changed: {{ row['changed_at'] }}</div>
+                    <div class="text-muted small num-tabular" style="font-size: 0.75rem;">Changed: {{ row['changed_at'].strftime('%Y-%m-%d %H:%M') }}</div>
                     <div class="text-secondary small" style="font-size: 0.75rem;">By: {{ row['changed_by_name'] or 'System' }}</div>
                   </div>
                 {% endfor %}
