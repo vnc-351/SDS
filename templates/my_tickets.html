@@ -53,7 +53,7 @@
               <span class="status-pill status-resolved"><span class="status-dot"></span> Resolved</span>
             {% endif %}
           </td>
-          <td class="text-secondary small num-tabular">{{ complaint['created_at'][:10] }}</td>
+          <td class="text-secondary small num-tabular">{{ complaint['created_at'].strftime('%Y-%m-%d') }}</td>
           <td class="text-end">
             <a href="{{ url_for('issues.ticket_detail', ticket_id=complaint['id']) }}" class="btn btn-sm btn-outline-cyan">Details</a>
           </td>
