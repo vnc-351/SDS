@@ -1,5 +1,5 @@
 """Student dashboard and "my tickets" list."""
-from flask import Blueprint, redirect, render_template, url_for
+from flask import Blueprint, render_template
 
 from database import ACTIVE_TICKET_SQL, get_db, ticket_ref
 from routes.auth_routes import get_logged_user, login_required
@@ -11,8 +11,6 @@ student_bp = Blueprint("student", __name__)
 @login_required
 def student_dashboard():
     user = get_logged_user()
-    if user is None:
-        return redirect(url_for("auth.login"))
     conn = get_db()
     complaints = conn.execute(
         f"""
@@ -50,8 +48,6 @@ def student_dashboard():
 @login_required
 def my_tickets():
     user = get_logged_user()
-    if user is None:
-        return redirect(url_for("auth.login"))
     conn = get_db()
     complaints = conn.execute(
         f"SELECT * FROM complaints WHERE user_id = ? AND {ACTIVE_TICKET_SQL} ORDER BY created_at DESC",

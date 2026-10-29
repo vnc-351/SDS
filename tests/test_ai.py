@@ -54,7 +54,7 @@ class GeminiTests(unittest.TestCase):
             get_ticket_ai_suggestions("Loose handle", "The handle is loose.")
         options = mock_genai.Client.call_args.kwargs["http_options"]
         self.assertGreater(options["timeout"], 0)
-        self.assertLessEqual(options["timeout"], 30000)
+        self.assertLessEqual(options["timeout"], 60000)
 
     @patch("services.gemini_service.genai")
     def test_ai_accepts_cleaning_category_and_new_priority_levels(self, mock_genai):

@@ -1,15 +1,21 @@
 import json
+import logging
 import os
+
+import httpx
 
 try:
     from google import genai
+    from google.genai import errors as genai_errors
 except ImportError:  # pragma: no cover - handled gracefully in app
     genai = None
+    genai_errors = None
 
+logger = logging.getLogger(__name__)
 
 ALLOWED_AI_CATEGORIES = ["Electrical", "Plumbing", "Furniture", "Civil", "Cleaning", "Other"]
 ALLOWED_AI_PRIORITIES = ["Critical", "Important", "Normal", "Low"]
-AI_TIMEOUT_MS = 15000
+AI_TIMEOUT_MS = 60000
 GEMINI_MODEL = "gemini-3.5-flash-lite"
 
 
@@ -70,7 +76,7 @@ def get_ticket_ai_suggestions(title, description, original_category=None):
     """
 
     try:
-        # Timeout is in milliseconds so a slow AI call cannot hang the student's form submission.
+        # Bound the request time; Gemini sometimes needs longer than the default for this prompt.
         client = genai.Client(api_key=api_key, http_options={"timeout": AI_TIMEOUT_MS})
         response = client.models.generate_content(
             model=GEMINI_MODEL,
@@ -104,7 +110,12 @@ def get_ticket_ai_suggestions(title, description, original_category=None):
             "explanation": explanation,
             "status": "ok",
         }
-    except Exception as exc:  # pragma: no cover - exercised in tests by mocking
+    except (
+        genai_errors.APIError,
+        httpx.HTTPError,
+        ValueError,
+    ) as exc:  # pragma: no cover - exercised in tests by mocking
+        logger.warning("Gemini recommendation failed: %s", type(exc).__name__, exc_info=True)
         return {
             "category": None,
             "priority": None,
