@@ -1,164 +1,162 @@
 # CampusFix
 
-CampusFix is a beginner-friendly Flask web application for reporting and tracking campus infrastructure issues. Students can submit problems such as broken furniture, electrical faults, plumbing issues, or civil damage. Administrators can review complaints, filter them, and update statuses. The app also includes a small Gemini-based feature to suggest category and priority.
-
-## Problem statement
-
-Universities need a simple way to capture facilities issues before they become bigger problems. Traditional methods often lose complaints or make it difficult to track what happens next. CampusFix centralizes issue reporting and makes progress visible to both students and administrators.
+CampusFix is a web app for reporting and tracking campus maintenance issues. Students report a problem with a photo, the community votes on what matters most, and administrators triage tickets and update their status. Google Gemini suggests a category and a priority to help administrators, but a human always makes the final decision.
 
 ## Features
 
-- Student registration and secure login
-- Password hashing using Werkzeug
-- Complaint submission with image upload
-- Ticket tracking by ID and status
-- Issue board with one upvote or downvote per student
-- Resolved tickets move to an archive view after one day and remain stored
-- Administrator dashboard with filters and search
-- Status history tracking
-- AI suggestion for category and priority (when configured), including Cleaning and Other
-- Categories: Electrical, Plumbing, Furniture, Civil, Cleaning, Other
-- AI priority levels: Critical, Important, Normal, Low
-- SQLite persistence for users and complaints
-- Beginner-friendly documentation and testing
+**Students**
+- Register and log in (new accounts are always students).
+- Report an issue with a title, category, location, description and a JPG or PNG photo.
+- Follow their own tickets from Pending to In Progress to Resolved, with a timestamped status history.
+- Vote on open issues on the campus issue board (one vote per issue; it can be changed or removed).
+
+**Administrators**
+- Dashboard with live counts (total, pending, in progress, resolved).
+- Search by title, location or ticket ID (`CF-00012`, `cf12`, `12`), and filter by status and category.
+- Change a ticket's status (every change is recorded in the status history).
+- See the AI suggestion (category, priority, short explanation) for each ticket. It is advisory only.
+
+**For everyone**
+- Resolved tickets stay in normal lists for one day, then move to the archive.
+- Uploaded photos are private: only the student who reported the issue and administrators can view them.
 
 ## Tech stack
 
-- Python
-- Flask
-- SQLite
-- HTML, CSS, Bootstrap 5, Jinja2
-- JavaScript for small interface enhancements
-- Google Gemini API via the official `google-genai` SDK
-- Python `dotenv` for environment configuration
+| Part | Technology |
+|---|---|
+| Backend | Python 3.12 or 3.13, Flask |
+| Database | PostgreSQL, accessed with `psycopg` 3 |
+| Authentication | Flask signed-cookie sessions, Werkzeug password hashing, role-based access control |
+| Forms and security | Flask-WTF (CSRF), Pillow (image validation) |
+| AI | Google Gemini through the `google-genai` SDK |
+| Frontend | Jinja2 templates, Bootstrap 5, a little JavaScript |
+| Tests | `unittest` |
 
-## Why this stack was selected
+## Project structure
 
-This combination is simple, open-source, and easy to explain in an interview. Flask is easy for beginners to understand, SQLite is lightweight and local, and Bootstrap helps build a professional-looking interface without a frontend build step.
+```
+SDS-main/
+├── app.py               # App factory, error handlers, command-line entry point
+├── config.py            # Reads .env; limits and shared lists (statuses, categories, priorities)
+├── database.py          # PostgreSQL connection, schema creation, admin bootstrap
+├── requirements.txt
+├── .env.example         # Template for your private .env file
+├── routes/              # Flask blueprints (auth, student, issues, admin, main)
+├── services/            # Gemini integration
+├── templates/           # Jinja2 pages
+├── static/              # CSS, JavaScript, images
+├── tests/               # 7 test files + pg_helpers.py
+├── uploads/             # Uploaded photos (contents are not committed)
+└── docs/                # Database notes and design documents
+```
 
-## Folder structure
+## Getting started (Windows, PowerShell)
 
-- `app.py` — creates and configures the Flask app, registers the blueprints, starts the server
-- `database.py` — database connection, table creation, and admin account setup
-- `config.py` — configuration values and shared choices (categories, statuses)
-- `routes/` — one Flask Blueprint per feature:
-  - `main_routes.py` — home page, protected image serving, health check
-  - `auth_routes.py` — register, login, logout, and the login/role checks
-  - `student_routes.py` — student dashboard and "My Tickets"
-  - `issue_routes.py` — report an issue, issue board and voting, archive, ticket details
-  - `admin_routes.py` — admin dashboard and status updates
-- `requirements.txt` — Python dependencies
-- `templates/` — HTML pages
-- `static/` — CSS and JavaScript assets
-- `uploads/` — uploaded issue images (created at runtime, not in Git, not publicly served)
-- `services/gemini_service.py` — Gemini AI integration
-- `tests/` — automated tests
-- `docs/` — design and architecture notes
-- `steering/` — project context and coding guidance
+### 1. Install the requirements
+- Python 3.12 or 3.13. Python 3.14 is not supported yet because Pillow has no prebuilt package for it.
+- PostgreSQL (any recent version), with its SQL Shell (`psql`).
 
-## Prerequisites
+### 2. Create the databases
+Open SQL Shell, press Enter for server, database, port and user, type your password, then run:
 
-- Python 3.11+
-- Windows PowerShell or VS Code terminal
-- Internet access for Gemini API use (optional)
+```sql
+CREATE DATABASE campusfix;
+CREATE DATABASE campusfix_test;
+```
 
-## Windows installation
+`campusfix` is used by the app. `campusfix_test` is used only by the tests, which empty it on every run.
+
+### 3. Create a virtual environment and install packages
 
 ```powershell
-cd path\to\your\project-folder
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
+py -3.12 -m venv .venv
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned   # only if Activate.ps1 is blocked
+.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-## Environment configuration
-
-Create a local `.env` file using the example file:
+### 4. Configure your environment
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Then update `.env`:
+Edit `.env` and fill in the real values. This file is private and is never committed.
 
-```env
-SECRET_KEY=your-secret-key-here
-GEMINI_API_KEY=your-gemini-api-key-here
-ADMIN_EMAIL=admin@campusfix.local
-ADMIN_PASSWORD=your-strong-password-here
-```
+| Variable | Purpose |
+|---|---|
+| `SECRET_KEY` | Signs the session cookie. If missing, a random key is used and everyone is logged out on every restart. |
+| `DATABASE_URL` | Connection URL of the app database, for example `postgresql://postgres:PASSWORD@localhost:5432/campusfix` |
+| `TEST_DATABASE_URL` | Connection URL of the test database. Its name must end with `_test`. |
+| `GEMINI_API_KEY` | Optional. Without it, tickets are still created but have no AI suggestion. |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Optional. If both are set, that admin account is created at startup. |
 
-## Create the first administrator
+If your password contains special characters, write them percent-encoded in the URL, for example `@` as `%40`, `:` as `%3A`, `/` as `%2F`, `#` as `%23`.
 
-Use the built-in CLI helper:
+### 5. Create an administrator (if you did not set ADMIN_EMAIL / ADMIN_PASSWORD)
 
 ```powershell
-python app.py --create-admin --email admin@campusfix.local --password "your-strong-password-here"
+python app.py --create-admin --email admin@example.com --password YourPassword123
 ```
 
-## Run the application
+This never changes an existing student account.
+
+### 6. Run the app
 
 ```powershell
 python app.py
 ```
 
-Then open the browser to:
+Open http://127.0.0.1:5000. Tables are created automatically on first start.
 
-```text
-http://127.0.0.1:5000/
-```
-
-## Run the tests
+## Running the tests
 
 ```powershell
-.\.venv\Scripts\python -m unittest discover -s tests -v
+python -m unittest discover tests
 ```
 
-## Gemini API setup
+The suite has 67 tests and takes about a minute. It uses the `campusfix_test` database and refuses to run if `TEST_DATABASE_URL` is missing, equals `DATABASE_URL`, or does not end in `_test`. The tests that use Gemini mock the API, so no key or internet is needed.
 
-1. Create a Google AI Studio account or use a valid Gemini API key.
-2. Add the key to the `.env` file as `GEMINI_API_KEY`.
-3. Restart the Flask app.
-4. If the key is missing or the API fails, the complaint workflow still continues without AI suggestions.
+The line `ADMIN_EMAIL ... already registered as a student` that may appear in the output is a deliberate warning from `test_database.py`, not an error.
 
-## How to use the app
+## Pages and access
 
-### Student
+| Path | Who | Purpose |
+|---|---|---|
+| `/` | everyone | Home page |
+| `/register`, `/login`, `/logout` | everyone | Account pages |
+| `/dashboard`, `/my_tickets` | logged-in users | A student's own tickets |
+| `/report_issue` | logged-in users | Submit a new issue |
+| `/issues` | logged-in users | Campus issue board |
+| `/issues/<id>/vote` | students | Vote on an issue (POST) |
+| `/ticket/<id>` | owner or admin | Ticket details and status history |
+| `/archive` | logged-in users | Resolved tickets older than one day |
+| `/admin` | admins | Dashboard, search and filters |
+| `/admin/update_status/<id>` | admins | Change a ticket's status (POST) |
+| `/uploads/<file>` | owner or admin | Protected photo download |
+| `/health` | everyone | Health check, returns `{"status": "ok"}` |
 
-1. Open the home page.
-2. Register a student account.
-3. Log in and click "Report a New Issue".
-4. Add the issue details, upload a JPG or PNG photo, and submit.
-5. Use the dashboard or my tickets page to track each complaint.
-6. Use Campus Issues to upvote or downvote open campus problems. You may change or remove your vote.
-7. View tickets resolved for over one day from Archive; they are hidden from regular ticket lists, not deleted.
+## Security summary
 
-### Administrator
+- Passwords are hashed with Werkzeug. New registrations are always students.
+- All forms carry CSRF tokens.
+- Uploaded images are checked for extension, size (5 MB), pixel count (25 million) and real content with Pillow. The stored file gets a random name and an extension taken from the detected format.
+- Photos are served only to the reporter and to administrators.
+- Database access uses parameterised queries only.
+- Known limits, planned for later: no login rate limiting, logout works through a GET request, sessions have no server-side revocation or lifetime.
 
-1. Log in with the admin email and password.
-2. Open the admin dashboard.
-3. Search, filter, and update statuses.
-4. Review ticket history and AI guidance.
+## Team workflow
 
-## Limitations
+- Never commit directly to `main`. Use a feature branch and open a Pull Request.
+- Before merging, check the **Files changed** tab for unintended deletions.
+- Secrets are never pushed. `.env`, `.venv/`, `*.db` and the contents of `uploads/` are ignored.
 
-- This is a prototype for learning and interview preparation.
-- It is not production ready for public internet deployment.
-- Real deployment would require stronger security, backups, and production hosting.
+## Roadmap
 
-## Security notes
+1. Server-side sessions stored in PostgreSQL.
+2. Login rate limiting, logout through POST, pagination and filters, admin comments, password reset.
+3. Deployment with `gunicorn`, a hosted PostgreSQL, environment variables on the host, persistent storage for `uploads/`, and `SESSION_COOKIE_SECURE`.
 
-- Passwords are hashed before storage.
-- The app uses environment variables for secrets. Set `SECRET_KEY` in `.env`; if it is missing or still the placeholder, a temporary random key is used and everyone is logged out on each restart.
-- Every form that changes data includes a CSRF token (Flask-WTF).
-- Uploaded images are stored in the `uploads/` folder, outside `static/`. Only the student who reported the issue, or an admin, can view an image (login required).
-- Uploads are checked by extension, size (max 5 MB), image dimensions, and real file content (only genuine PNG/JPEG files are accepted). Stored filenames are random.
-- The app protects admin routes and restricts unauthorized access.
+## Attribution
 
-## Future improvements
-
-- Better duplicate detection
-- Admin audit logs
-- Role-based UI controls
-- Notification workflow
+The home page photo is credited in `static/images/ATTRIBUTION.md` (CC BY-SA 4.0, Wikimedia Commons).
