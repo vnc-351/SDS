@@ -1,37 +1,23 @@
-import os
-import sqlite3
-import tempfile
 import unittest
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import create_app
+from pg_helpers import TEST_DATABASE_URL, connect, reset_db
 
 
 class AuthTests(unittest.TestCase):
     def setUp(self):
-        fd, db_path = tempfile.mkstemp(suffix=".db")
-        os.close(fd)
-        self.db_path = db_path
-        self.app = create_app(testing=True, database_path=self.db_path)
+        reset_db()
+        self.app = create_app(testing=True, database_url=TEST_DATABASE_URL)
         self.client = self.app.test_client()
 
-    def tearDown(self):
-        try:
-            os.remove(self.db_path)
-        except FileNotFoundError:
-            pass
-
     def create_user(self, name="Test User", email="user@example.com", password="Password1", role="student"):
-        conn = sqlite3.connect(self.db_path)
-        conn.execute(
-            "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
-            (name, email, generate_password_hash(password), role),
-        )
-        conn.commit()
-        user_id = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()[0]
-        conn.close()
-        return user_id
+        with connect() as conn:
+            return conn.execute(
+                "INSERT INTO users (name, email, password_hash, role) VALUES (%s, %s, %s, %s) RETURNING id",
+                (name, email, generate_password_hash(password), role),
+            ).fetchone()[0]
 
     def test_home_page_loading(self):
         response = self.client.get("/")
@@ -93,9 +79,8 @@ class AuthTests(unittest.TestCase):
 
     def test_password_hashing(self):
         user_id = self.create_user(email="hash@example.com", password="Secret999")
-        conn = sqlite3.connect(self.db_path)
-        row = conn.execute("SELECT password_hash FROM users WHERE id = ?", (user_id,)).fetchone()
-        conn.close()
+        with connect() as conn:
+            row = conn.execute("SELECT password_hash FROM users WHERE id = %s", (user_id,)).fetchone()
         self.assertTrue(check_password_hash(row[0], "Secret999"))
 
     def test_student_route_access_restrictions(self):

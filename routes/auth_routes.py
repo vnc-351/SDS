@@ -1,6 +1,6 @@
 """Registration, login, logout, and the login/role decorators used by every other route file."""
 from functools import wraps
-
+import psycopg
 from flask import Blueprint, flash, g, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -15,7 +15,7 @@ def get_logged_user():
         g.current_user = None
         user_id = session.get("user_id")
         if user_id:
-            g.current_user = get_db().execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+            g.current_user = get_db().execute("SELECT * FROM users WHERE id = %s", (user_id,)).fetchone()
     return g.current_user
 
 
@@ -71,16 +71,23 @@ def register():
             return render_template("register.html")
 
         conn = get_db()
-        existing = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+        existing = conn.execute("SELECT id FROM users WHERE email = %s", (email,)).fetchone()
         if existing:
             flash("An account with this email already exists.", "error")
             return render_template("register.html")
 
-        conn.execute(
-            "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'student')",
-            (name, email, generate_password_hash(password)),
-        )
-        conn.commit()
+        try:
+            conn.execute(
+                "INSERT INTO users (name, email, password_hash, role) VALUES (%s, %s, %s, 'student')",
+                (name, email, generate_password_hash(password)),
+            )
+            conn.commit()
+        except psycopg.errors.UniqueViolation:
+            # Two people registering the same email at the same moment.
+            conn.rollback()
+            flash("An account with this email already exists.", "error")
+            return render_template("register.html")
+
         flash("Registration successful. Please log in.", "success")
         return redirect(url_for("auth.login"))
 
@@ -94,7 +101,7 @@ def login():
         password = request.form.get("password") or ""
 
         conn = get_db()
-        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        user = conn.execute("SELECT * FROM users WHERE email = %s", (email,)).fetchone()
         if user is None or not check_password_hash(user["password_hash"], password):
             flash("Invalid email or password.", "error")
             return render_template("login.html")

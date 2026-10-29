@@ -1,7 +1,6 @@
 import io
 import os
 import shutil
-import sqlite3
 import tempfile
 import unittest
 
@@ -9,6 +8,7 @@ from PIL import Image
 from werkzeug.security import generate_password_hash
 
 from app import create_app
+from pg_helpers import TEST_DATABASE_URL, connect, reset_db
 
 
 def make_image(image_format="PNG", size=(8, 8)):
@@ -20,31 +20,21 @@ def make_image(image_format="PNG", size=(8, 8)):
 
 class ComplaintTests(unittest.TestCase):
     def setUp(self):
-        fd, db_path = tempfile.mkstemp(suffix=".db")
-        os.close(fd)
-        self.db_path = db_path
+        reset_db()
         self.upload_dir = tempfile.mkdtemp()
-        self.app = create_app(testing=True, database_path=self.db_path, upload_folder=self.upload_dir)
+        self.app = create_app(testing=True, database_url=TEST_DATABASE_URL, upload_folder=self.upload_dir)
         self.client = self.app.test_client()
         self.user_id = self.create_user(email="student@example.com", password="Student123")
 
     def tearDown(self):
-        try:
-            os.remove(self.db_path)
-        except FileNotFoundError:
-            pass
         shutil.rmtree(self.upload_dir, ignore_errors=True)
 
     def create_user(self, name="Student", email="student@example.com", password="Student123", role="student"):
-        conn = sqlite3.connect(self.db_path)
-        conn.execute(
-            "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
-            (name, email, generate_password_hash(password), role),
-        )
-        conn.commit()
-        user_id = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()[0]
-        conn.close()
-        return user_id
+        with connect() as conn:
+            return conn.execute(
+                "INSERT INTO users (name, email, password_hash, role) VALUES (%s, %s, %s, %s) RETURNING id",
+                (name, email, generate_password_hash(password), role),
+            ).fetchone()[0]
 
     def test_student_complaint_submission(self):
         self.client.post("/login", data={"email": "student@example.com", "password": "Student123"})
@@ -188,14 +178,12 @@ class ComplaintTests(unittest.TestCase):
 
     def test_prevention_of_access_to_another_students_tickets(self):
         other_user = self.create_user(name="Other Student", email="other@example.com", password="Other123")
-        conn = sqlite3.connect(self.db_path)
-        conn.execute(
-            "INSERT INTO complaints (user_id, title, category, location, description, image_filename, status, updated_at) VALUES (?, ?, ?, ?, ?, ?, 'Pending', CURRENT_TIMESTAMP)",
-            (other_user, "Broken light", "Electrical", "Block B", "Light is off.", "sample.png"),
-        )
-        conn.commit()
-        complaint_id = conn.execute("SELECT id FROM complaints WHERE title = 'Broken light'").fetchone()[0]
-        conn.close()
+        with connect() as conn:
+            complaint_id = conn.execute(
+                "INSERT INTO complaints (user_id, title, category, location, description, image_filename, status, updated_at) "
+                "VALUES (%s, %s, %s, %s, %s, %s, 'Pending', CURRENT_TIMESTAMP) RETURNING id",
+                (other_user, "Broken light", "Electrical", "Block B", "Light is off.", "sample.png"),
+            ).fetchone()[0]
 
         self.client.post("/login", data={"email": "student@example.com", "password": "Student123"})
         response = self.client.get(f"/ticket/{complaint_id}", follow_redirects=True)
@@ -208,21 +196,16 @@ class ComplaintTests(unittest.TestCase):
         self.assertIn(b"Other", response.data)
 
     def test_student_can_change_or_remove_one_vote_per_issue(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.execute(
-            """
-            INSERT INTO complaints
-                (user_id, title, category, location, description, status, updated_at)
-            VALUES (?, ?, ?, ?, ?, 'Pending', CURRENT_TIMESTAMP)
-            """,
-            (self.user_id, "Unclean washroom", "Cleaning", "Block A", "Needs cleaning."),
-        )
-        conn.commit()
-        complaint_id = conn.execute(
-            "SELECT id FROM complaints WHERE title = ?",
-            ("Unclean washroom",),
-        ).fetchone()[0]
-        conn.close()
+        with connect() as conn:
+            complaint_id = conn.execute(
+                """
+                INSERT INTO complaints
+                    (user_id, title, category, location, description, status, updated_at)
+                VALUES (%s, %s, %s, %s, %s, 'Pending', CURRENT_TIMESTAMP)
+                RETURNING id
+                """,
+                (self.user_id, "Unclean washroom", "Cleaning", "Block A", "Needs cleaning."),
+            ).fetchone()[0]
 
         self.client.post("/login", data={"email": "student@example.com", "password": "Student123"})
         first_vote = self.client.post(
@@ -233,35 +216,31 @@ class ComplaintTests(unittest.TestCase):
         self.assertIn(b"Upvote 1", first_vote.data)
 
         self.client.post(f"/issues/{complaint_id}/vote", data={"vote": "-1"})
-        conn = sqlite3.connect(self.db_path)
-        vote_after_change = conn.execute(
-            "SELECT vote FROM complaint_votes WHERE complaint_id = ? AND user_id = ?",
-            (complaint_id, self.user_id),
-        ).fetchone()[0]
-        conn.close()
+        with connect() as conn:
+            vote_after_change = conn.execute(
+                "SELECT vote FROM complaint_votes WHERE complaint_id = %s AND user_id = %s",
+                (complaint_id, self.user_id),
+            ).fetchone()[0]
         self.assertEqual(vote_after_change, -1)
 
         self.client.post(f"/issues/{complaint_id}/vote", data={"vote": "-1"})
-        conn = sqlite3.connect(self.db_path)
-        remaining_votes = conn.execute(
-            "SELECT COUNT(*) FROM complaint_votes WHERE complaint_id = ? AND user_id = ?",
-            (complaint_id, self.user_id),
-        ).fetchone()[0]
-        conn.close()
+        with connect() as conn:
+            remaining_votes = conn.execute(
+                "SELECT COUNT(*) FROM complaint_votes WHERE complaint_id = %s AND user_id = %s",
+                (complaint_id, self.user_id),
+            ).fetchone()[0]
         self.assertEqual(remaining_votes, 0)
 
     def test_resolved_ticket_moves_to_archive_after_one_day(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.execute(
-            """
-            INSERT INTO complaints
-                (user_id, title, category, location, description, status, updated_at)
-            VALUES (?, ?, ?, ?, ?, 'Resolved', datetime('now', '-2 days'))
-            """,
-            (self.user_id, "Old resolved leak", "Plumbing", "Block C", "Leak repaired."),
-        )
-        conn.commit()
-        conn.close()
+        with connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO complaints
+                    (user_id, title, category, location, description, status, updated_at)
+                VALUES (%s, %s, %s, %s, %s, 'Resolved', NOW() - INTERVAL '2 days')
+                """,
+                (self.user_id, "Old resolved leak", "Plumbing", "Block C", "Leak repaired."),
+            )
 
         self.client.post("/login", data={"email": "student@example.com", "password": "Student123"})
         tickets = self.client.get("/my_tickets")

@@ -2,13 +2,13 @@ import glob
 import os
 import re
 import shutil
-import sqlite3
 import tempfile
 import unittest
 
 from werkzeug.security import generate_password_hash
 
 from app import create_app
+from pg_helpers import TEST_DATABASE_URL, connect, reset_db
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
 
@@ -17,27 +17,24 @@ class PageIntegrationTests(unittest.TestCase):
     """Checks that blueprints, templates and url_for() references fit together."""
 
     def setUp(self):
-        fd, self.db_path = tempfile.mkstemp(suffix=".db")
-        os.close(fd)
+        reset_db()
         self.upload_dir = tempfile.mkdtemp()
-        self.app = create_app(testing=True, database_path=self.db_path, upload_folder=self.upload_dir)
+        self.app = create_app(testing=True, database_url=TEST_DATABASE_URL, upload_folder=self.upload_dir)
         self.client = self.app.test_client()
 
-        conn = sqlite3.connect(self.db_path)
-        for email, role in (("student@example.com", "student"), ("admin@example.com", "admin")):
+        # The ids restart at 1 after reset_db(), so the student is user 1 and owns complaint 1.
+        with connect() as conn:
+            for email, role in (("student@example.com", "student"), ("admin@example.com", "admin")):
+                conn.execute(
+                    "INSERT INTO users (name, email, password_hash, role) VALUES (%s, %s, %s, %s)",
+                    (role.title(), email, generate_password_hash("Passw0rd1"), role),
+                )
             conn.execute(
-                "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
-                (role.title(), email, generate_password_hash("Passw0rd1"), role),
+                "INSERT INTO complaints (user_id, title, category, location, description, status, updated_at) "
+                "VALUES (1, 'Leaky tap', 'Plumbing', 'Block A', 'Dripping', 'Pending', CURRENT_TIMESTAMP)"
             )
-        conn.execute(
-            "INSERT INTO complaints (user_id, title, category, location, description, status, updated_at) "
-            "VALUES (1, 'Leaky tap', 'Plumbing', 'Block A', 'Dripping', 'Pending', CURRENT_TIMESTAMP)"
-        )
-        conn.commit()
-        conn.close()
 
     def tearDown(self):
-        os.remove(self.db_path)
         shutil.rmtree(self.upload_dir, ignore_errors=True)
 
     def login(self, email):

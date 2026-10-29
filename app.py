@@ -21,7 +21,7 @@ from routes import register_blueprints
 csrf = CSRFProtect()
 
 
-def create_app(testing=False, database_path=None, upload_folder=None):
+def create_app(testing=False, database_url=None, upload_folder=None):
     app = Flask(__name__)
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
@@ -29,7 +29,7 @@ def create_app(testing=False, database_path=None, upload_folder=None):
     app.config["MAX_IMAGE_BYTES"] = MAX_IMAGE_BYTES
     app.config["MAX_IMAGE_PIXELS"] = MAX_IMAGE_PIXELS
     app.config["TESTING"] = testing
-    app.config["DATABASE"] = database_path or DATABASE
+    app.config["DATABASE"] = database_url or DATABASE
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     # CSRF tokens are checked on every POST. Tests switch this off unless they are testing CSRF itself.
     app.config["WTF_CSRF_ENABLED"] = not testing

@@ -36,19 +36,19 @@ def admin_dashboard():
 
     if search_term:
         term = f"%{search_term.lower()}%"
-        search_sql = "LOWER(c.title) LIKE ? OR LOWER(c.location) LIKE ?"
+        search_sql = "c.title ILIKE %s OR c.location ILIKE %s"
         params.extend([term, term])
         ticket_number = ticket_number_from_search(search_term)
         if ticket_number is not None:
-            search_sql += " OR c.id = ?"
+            search_sql += " OR c.id = %s"
             params.append(ticket_number)
         query += f" AND ({search_sql})"
 
     if status_filter:
-        query += " AND c.status = ?"
+        query += " AND c.status = %s"
         params.append(status_filter)
     if category_filter:
-        query += " AND c.category = ?"
+        query += " AND c.category = %s"
         params.append(category_filter)
 
     query += " ORDER BY c.created_at DESC"
@@ -84,7 +84,7 @@ def update_status(ticket_id):
         return redirect(url_for("admin.admin_dashboard"))
 
     conn = get_db()
-    complaint = conn.execute("SELECT * FROM complaints WHERE id = ?", (ticket_id,)).fetchone()
+    complaint = conn.execute("SELECT * FROM complaints WHERE id = %s", (ticket_id,)).fetchone()
     if complaint is None:
         flash("Complaint not found.", "error")
         return redirect(url_for("admin.admin_dashboard"))
@@ -95,11 +95,11 @@ def update_status(ticket_id):
         return redirect(url_for("admin.admin_dashboard"))
 
     conn.execute(
-        "UPDATE complaints SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        "UPDATE complaints SET status = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
         (status, ticket_id),
     )
     conn.execute(
-        "INSERT INTO status_history (complaint_id, previous_status, new_status, changed_by) VALUES (?, ?, ?, ?)",
+        "INSERT INTO status_history (complaint_id, previous_status, new_status, changed_by) VALUES (%s, %s, %s, %s)",
         (ticket_id, previous_status, status, session["user_id"]),
     )
     conn.commit()

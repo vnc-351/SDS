@@ -18,7 +18,7 @@ def serve_uploaded_file(filename):
     """Only the student who reported the issue, or an admin, may view its image."""
     user = get_logged_user()
     complaint = get_db().execute(
-        "SELECT user_id FROM complaints WHERE image_filename = ?", (filename,)
+        "SELECT user_id FROM complaints WHERE image_filename = %s", (filename,)
     ).fetchone()
     # 404 (not 403) for both cases so filenames cannot be probed.
     if complaint is None or (user["role"] != "admin" and complaint["user_id"] != user["id"]):

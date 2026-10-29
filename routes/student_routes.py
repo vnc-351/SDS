@@ -17,7 +17,7 @@ def student_dashboard():
     complaints = conn.execute(
         f"""
         SELECT * FROM complaints
-        WHERE user_id = ? AND {ACTIVE_TICKET_SQL}
+        WHERE user_id = %s AND {ACTIVE_TICKET_SQL}
         ORDER BY created_at DESC
         LIMIT 10
         """,
@@ -25,15 +25,15 @@ def student_dashboard():
     ).fetchall()
     stats = {
         "pending": conn.execute(
-            f"SELECT COUNT(*) as count FROM complaints WHERE user_id = ? AND status = 'Pending' AND {ACTIVE_TICKET_SQL}",
+            f"SELECT COUNT(*) as count FROM complaints WHERE user_id = %s AND status = 'Pending' AND {ACTIVE_TICKET_SQL}",
             (user["id"],),
         ).fetchone()["count"],
         "progress": conn.execute(
-            f"SELECT COUNT(*) as count FROM complaints WHERE user_id = ? AND status = 'In Progress' AND {ACTIVE_TICKET_SQL}",
+            f"SELECT COUNT(*) as count FROM complaints WHERE user_id = %s AND status = 'In Progress' AND {ACTIVE_TICKET_SQL}",
             (user["id"],),
         ).fetchone()["count"],
         "resolved": conn.execute(
-            f"SELECT COUNT(*) as count FROM complaints WHERE user_id = ? AND status = 'Resolved' AND {ACTIVE_TICKET_SQL}",
+            f"SELECT COUNT(*) as count FROM complaints WHERE user_id = %s AND status = 'Resolved' AND {ACTIVE_TICKET_SQL}",
             (user["id"],),
         ).fetchone()["count"],
     }
@@ -54,7 +54,7 @@ def my_tickets():
         return redirect(url_for("auth.login"))
     conn = get_db()
     complaints = conn.execute(
-        f"SELECT * FROM complaints WHERE user_id = ? AND {ACTIVE_TICKET_SQL} ORDER BY created_at DESC",
+        f"SELECT * FROM complaints WHERE user_id = %s AND {ACTIVE_TICKET_SQL} ORDER BY created_at DESC",
         (user["id"],),
     ).fetchall()
     return render_template("my_tickets.html", complaints=complaints, ticket_ref=ticket_ref)

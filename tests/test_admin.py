@@ -1,39 +1,25 @@
-import os
-import sqlite3
-import tempfile
 import unittest
 
 from werkzeug.security import generate_password_hash
 
 from app import create_app
+from pg_helpers import TEST_DATABASE_URL, connect, reset_db
 
 
 class AdminTests(unittest.TestCase):
     def setUp(self):
-        fd, db_path = tempfile.mkstemp(suffix=".db")
-        os.close(fd)
-        self.db_path = db_path
-        self.app = create_app(testing=True, database_path=self.db_path)
+        reset_db()
+        self.app = create_app(testing=True, database_url=TEST_DATABASE_URL)
         self.client = self.app.test_client()
         self.student_id = self.create_user(email="student@example.com", password="Student123")
         self.admin_id = self.create_user(email="admin@example.com", password="Admin123", role="admin")
 
-    def tearDown(self):
-        try:
-            os.remove(self.db_path)
-        except FileNotFoundError:
-            pass
-
     def create_user(self, name="User", email="user@example.com", password="Password1", role="student"):
-        conn = sqlite3.connect(self.db_path)
-        conn.execute(
-            "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
-            (name, email, generate_password_hash(password), role),
-        )
-        conn.commit()
-        user_id = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()[0]
-        conn.close()
-        return user_id
+        with connect() as conn:
+            return conn.execute(
+                "INSERT INTO users (name, email, password_hash, role) VALUES (%s, %s, %s, %s) RETURNING id",
+                (name, email, generate_password_hash(password), role),
+            ).fetchone()[0]
 
     def test_admin_route_restrictions(self):
         self.client.post("/login", data={"email": "student@example.com", "password": "Student123"})
@@ -41,14 +27,12 @@ class AdminTests(unittest.TestCase):
         self.assertIn(b"not allowed", response.data)
 
     def test_admin_status_update_and_history(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.execute(
-            "INSERT INTO complaints (user_id, title, category, location, description, image_filename, status, updated_at) VALUES (?, ?, ?, ?, ?, ?, 'Pending', CURRENT_TIMESTAMP)",
-            (self.student_id, "Broken chair", "Furniture", "Room 10", "Chair damaged.", "chair.png"),
-        )
-        conn.commit()
-        complaint_id = conn.execute("SELECT id FROM complaints WHERE title = ?", ("Broken chair",)).fetchone()[0]
-        conn.close()
+        with connect() as conn:
+            complaint_id = conn.execute(
+                "INSERT INTO complaints (user_id, title, category, location, description, image_filename, status, updated_at) "
+                "VALUES (%s, %s, %s, %s, %s, %s, 'Pending', CURRENT_TIMESTAMP) RETURNING id",
+                (self.student_id, "Broken chair", "Furniture", "Room 10", "Chair damaged.", "chair.png"),
+            ).fetchone()[0]
 
         self.client.post("/login", data={"email": "admin@example.com", "password": "Admin123"})
         response = self.client.post(
@@ -58,24 +42,21 @@ class AdminTests(unittest.TestCase):
         )
         self.assertIn(b"Status updated", response.data)
 
-        conn = sqlite3.connect(self.db_path)
-        updated = conn.execute("SELECT status FROM complaints WHERE id = ?", (complaint_id,)).fetchone()[0]
-        history_count = conn.execute("SELECT COUNT(*) FROM status_history WHERE complaint_id = ?", (complaint_id,)).fetchone()[0]
-        conn.close()
+        with connect() as conn:
+            updated = conn.execute("SELECT status FROM complaints WHERE id = %s", (complaint_id,)).fetchone()[0]
+            history_count = conn.execute(
+                "SELECT COUNT(*) FROM status_history WHERE complaint_id = %s", (complaint_id,)
+            ).fetchone()[0]
         self.assertEqual(updated, "In Progress")
         self.assertGreater(history_count, 0)
 
     def add_complaint(self, title, location="Block A"):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.execute(
-            "INSERT INTO complaints (user_id, title, category, location, description, status, updated_at) "
-            "VALUES (?, ?, 'Plumbing', ?, 'Details.', 'Pending', CURRENT_TIMESTAMP)",
-            (self.student_id, title, location),
-        )
-        conn.commit()
-        complaint_id = cursor.lastrowid
-        conn.close()
-        return complaint_id
+        with connect() as conn:
+            return conn.execute(
+                "INSERT INTO complaints (user_id, title, category, location, description, status, updated_at) "
+                "VALUES (%s, %s, 'Plumbing', %s, 'Details.', 'Pending', CURRENT_TIMESTAMP) RETURNING id",
+                (self.student_id, title, location),
+            ).fetchone()[0]
 
     def test_admin_can_search_by_displayed_ticket_id(self):
         first = self.add_complaint("Leaky tap")

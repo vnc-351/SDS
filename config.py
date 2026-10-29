@@ -18,7 +18,12 @@ def resolve_secret_key(value):
 
 
 SECRET_KEY, SECRET_KEY_IS_RANDOM = resolve_secret_key(os.getenv("SECRET_KEY"))
-DATABASE = str(BASE_DIR / "instance" / "campusfix.db")
+DATABASE = os.getenv("DATABASE_URL")
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+if not DATABASE:
+    raise RuntimeError("DATABASE_URL is not set. Copy .env.example to .env and fill it in.")
+if not TEST_DATABASE_URL:
+    raise RuntimeError("TEST_DATABASE_URL is not set. Copy .env.example to .env and fill it in.")
 UPLOAD_FOLDER = str(BASE_DIR / "uploads")
 # Uploaded issue images: size and dimension limits (checked again on the image content).
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
